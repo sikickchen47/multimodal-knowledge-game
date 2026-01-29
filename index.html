@@ -3,867 +3,588 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>World Model Observatory | 世界模型观测站</title>
+    <title>多模态知识库 - 68题挑战</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
     <style>
-        :root {
-            --neon-blue: #00f3ff;
-            --neon-purple: #bc13fe;
-            --neon-green: #0aff0a;
-            --deep-space: #050508;
-            --glass: rgba(255, 255, 255, 0.03);
-        }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--deep-space);
-            color: #e0e0e0;
-            overflow-x: hidden;
-        }
-        
-        .mono { font-family: 'JetBrains Mono', monospace; }
-        
-        /* 星空背景动画 */
-        .stars {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: -1;
-            background-image: 
-                radial-gradient(2px 2px at 20px 30px, #eee, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 50px 160px, #ddd, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 90px 40px, #fff, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 130px 80px, rgba(255,255,255,0.6), rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 160px 120px, #ddd, rgba(0,0,0,0));
-            background-repeat: repeat;
-            background-size: 200px 200px;
-            opacity: 0.3;
-            animation: twinkle 10s infinite linear;
-        }
-        
-        @keyframes twinkle {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 0.5; }
-        }
-        
-        /* 玻璃拟态卡片 */
-        .glass-panel {
-            background: var(--glass);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        }
-        
-        /* 霓虹光晕 */
-        .neon-border {
-            position: relative;
-        }
-        .neon-border::before {
-            content: '';
-            position: absolute;
-            inset: -2px;
-            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple), var(--neon-green));
-            border-radius: inherit;
-            z-index: -1;
-            opacity: 0;
-            transition: opacity 0.3s;
-            filter: blur(8px);
-        }
-        .neon-border:hover::before {
-            opacity: 0.7;
-        }
-        
-        /* 3D翻转卡片 */
-        .flip-card {
-            perspective: 1000px;
-            height: 400px;
-        }
-        .flip-inner {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            transition: transform 0.8s;
-            transform-style: preserve-3d;
-        }
-        .flip-card.flipped .flip-inner {
-            transform: rotateY(180deg);
-        }
-        .flip-front, .flip-back {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-            border-radius: 16px;
-        }
-        .flip-back {
-            transform: rotateY(180deg);
-        }
-        
-        /* 注意力热力图网格 */
-        .attention-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 4px;
-            max-width: 300px;
-        }
-        .attention-cell {
-            aspect-ratio: 1;
-            background: rgba(255,255,255,0.1);
-            border-radius: 4px;
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-        .attention-cell.active {
-            background: var(--neon-blue);
-            box-shadow: 0 0 10px var(--neon-blue);
-        }
-        .attention-cell.causal {
-            background: rgba(255,255,255,0.05);
-        }
-        .attention-cell.causal.active {
-            background: var(--neon-green);
-            box-shadow: 0 0 10px var(--neon-green);
-        }
-        
-        /* 雷达图容器 */
-        .radar-container {
-            filter: drop-shadow(0 0 20px rgba(0,243,255,0.2));
-        }
-        
-        /* 粒子轨迹 */
-        .particle {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: var(--neon-blue);
-            border-radius: 50%;
-            pointer-events: none;
-            box-shadow: 0 0 10px var(--neon-blue);
-        }
-        
-        /* 滚动条 */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: var(--deep-space);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(var(--neon-blue), var(--neon-purple));
-            border-radius: 4px;
-        }
-        
-        .gradient-text {
-            background: linear-gradient(135deg, #fff 0%, var(--neon-blue) 50%, var(--neon-purple) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37); }
+        .animate-slide-in { animation: slideIn 0.5s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .gradient-text { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .option-btn { transition: all 0.2s; border: 2px solid #e5e7eb; }
+        .option-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-color: #a855f7; }
+        .detail-box { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-left: 4px solid #3b82f6; }
     </style>
+<base target="_blank">
 </head>
-<body class="antialiased">
+<body class="p-4 md:p-8">
 
-<div class="stars"></div>
-
-<!-- 导航栏 -->
-<nav class="fixed top-0 w-full z-50 glass-panel border-b border-white/10">
-    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-        <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-purple-600 animate-pulse"></div>
-            <span class="text-xl font-bold tracking-wider">WORLD MODEL <span class="text-cyan-400 mono">OBSERVATORY</span></span>
-        </div>
-        <div class="hidden md:flex gap-6 text-sm mono text-gray-400">
-            <a href="#paradigms" class="hover:text-cyan-400 transition-colors">PARADIGMS</a>
-            <a href="#causality" class="hover:text-cyan-400 transition-colors">CAUSALITY</a>
-            <a href="#dimensions" class="hover:text-cyan-400 transition-colors">DIMENSIONS</a>
-            <a href="#landscape" class="hover:text-cyan-400 transition-colors">LANDSCAPE</a>
-        </div>
-    </div>
-</nav>
-
-<!-- 英雄区 -->
-<section class="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
-    <div class="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
-        <div class="w-[800px] h-[800px] border border-cyan-500/30 rounded-full animate-[spin_20s_linear_infinite]"></div>
-        <div class="absolute w-[600px] h-[600px] border border-purple-500/30 rounded-full animate-[spin_15s_linear_infinite_reverse]"></div>
-        <div class="absolute w-[400px] h-[400px] border border-green-500/30 rounded-full animate-[spin_10s_linear_infinite]"></div>
-    </div>
-    
-    <div class="relative z-10 text-center max-w-5xl px-6">
-        <div class="inline-block mb-4 px-4 py-1 rounded-full glass-panel text-cyan-400 text-sm mono border border-cyan-400/30">
-            INTERACTIVE SURVEY 2025
-        </div>
-        <h1 class="text-5xl md:text-7xl font-bold mb-6 leading-tight">
-            <span class="gradient-text">Beyond Reality</span><br>
-            <span class="text-white/90">Understanding World Models</span>
-        </h1>
-        <p class="text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            探索 AI 如何构建世界的内部表征。从 LeCun 的 JEPA 到 Sora 的模拟器，<br>
-            通过交互式可视化理解<span class="text-cyan-400">因果性</span>、<span class="text-purple-400">交互性</span>与<span class="text-green-400">物理准确性</span>的复杂权衡。
-        </p>
-        <button onclick="document.getElementById('paradigms').scrollIntoView({behavior: 'smooth'})" 
-                class="group relative px-8 py-4 bg-transparent border border-cyan-400/50 rounded-full overflow-hidden hover:border-cyan-400 transition-all">
-            <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-            <span class="relative text-cyan-400 mono font-bold group-hover:text-white transition-colors">INITIATE EXPLORATION →</span>
-        </button>
-    </div>
-</section>
-
-<!-- 第一部分：双范式对比（理解型 vs 模拟型） -->
-<section id="paradigms" class="py-20 px-6 max-w-7xl mx-auto">
-    <div class="mb-12 text-center">
-        <h2 class="text-3xl md:text-4xl font-bold mb-4">Two Paradigms of World Modeling</h2>
-        <p class="text-gray-400">点击卡片探索两种截然不同的世界观</p>
-    </div>
-
-    <div class="grid md:grid-cols-2 gap-8">
-        <!-- 理解型大脑 -->
-        <div class="flip-card cursor-pointer" onclick="this.classList.toggle('flipped')">
-            <div class="flip-inner">
-                <div class="flip-front glass-panel p-8 flex flex-col items-center justify-center neon-border">
-                    <div class="w-32 h-32 mb-6 relative">
-                        <div class="absolute inset-0 bg-gradient-to-br from-orange-500 to-red-600 rounded-full opacity-20 animate-pulse"></div>
-                        <svg class="w-full h-full text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
-                                  d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-2xl font-bold text-orange-400 mb-2">Understanding Brain</h3>
-                    <p class="text-center text-gray-400">抽象表征 · 语义预测 · 内部模型</p>
-                    <div class="mt-6 text-sm text-gray-500 mono">[ CLICK TO FLIP ]</div>
-                </div>
-                <div class="flip-back glass-panel p-8 bg-gradient-to-br from-orange-900/20 to-red-900/20">
-                    <h3 class="text-xl font-bold text-orange-400 mb-4">Internal World Model</h3>
-                    <ul class="space-y-3 text-sm text-gray-300">
-                        <li class="flex items-start gap-2">
-                            <span class="text-orange-400 mt-1">▸</span>
-                            <span>预测世界的<strong>抽象表征</strong>，而非像素细节</span>
-                        </li>
-                        <li class="flex items-start gap-2">
-                            <span class="text-orange-400 mt-1">▸</span>
-                            <span>类似人类大脑的粗糙未来预测（Coarse Future）</span>
-                        </li>
-                        <li class="flex items-start gap-2">
-                            <span class="text-orange-400 mt-1">▸</span>
-                            <span>支持规划、推理和决策</span>
-                        </li>
-                        <li class="flex items-start gap-2">
-                            <span class="text-orange-400 mt-1">▸</span>
-                            <span>代表：LeCun's JEPA, V-JEPA 2</span>
-                        </li>
-                    </ul>
-                    <div class="mt-6 p-4 rounded bg-black/30 border border-orange-500/30">
-                        <div class="text-xs text-orange-300 mono mb-1">ARCHITECTURE</div>
-                        <div class="text-sm">Perception → World Model (Latent Space) → Actor/Critic</div>
-                    </div>
-                </div>
+    <!-- 管理器 -->
+    <div class="max-w-6xl mx-auto glass rounded-3xl p-6 mb-6 animate-slide-in" id="manager">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">🧠 多模态学习知识库</h1>
+                <p class="text-sm text-gray-500 mt-2">智能混合模式 | 详细解析 | 提示功能 | 共68题</p>
             </div>
+            <button onclick="startGame()" class="bg-purple-600 text-white px-8 py-3 rounded-full font-bold text-lg hover:bg-purple-700 transition shadow-lg hover:shadow-xl transform hover:scale-105">
+                开始挑战 🎮
+            </button>
         </div>
 
-        <!-- 模拟型宇宙 -->
-        <div class="flip-card cursor-pointer" onclick="this.classList.toggle('flipped')">
-            <div class="flip-inner">
-                <div class="flip-front glass-panel p-8 flex flex-col items-center justify-center neon-border">
-                    <div class="w-32 h-32 mb-6 relative">
-                        <div class="absolute inset-0 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full opacity-20 animate-pulse"></div>
-                        <svg class="w-full h-full text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
-                                  d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-2xl font-bold text-cyan-400 mb-2">Simulation Matrix</h3>
-                    <p class="text-center text-gray-400">高保真模拟 · 像素级细节 · 外部世界</p>
-                    <div class="mt-6 text-sm text-gray-500 mono">[ CLICK TO FLIP ]</div>
-                </div>
-                <div class="flip-back glass-panel p-8 bg-gradient-to-br from-cyan-900/20 to-blue-900/20">
-                    <h3 class="text-xl font-bold text-cyan-400 mb-4">External World Simulator</h3>
-                    <ul class="space-y-3 text-sm text-gray-300">
-                        <li class="flex items-start gap-2">
-                            <span class="text-cyan-400 mt-1">▸</span>
-                            <span>模拟世界的<strong>每一个细节</strong>，类似《黑客帝国》</span>
-                        </li>
-                        <li class="flex items-start gap-2">
-                            <span class="text-cyan-400 mt-1">▸</span>
-                            <span>高保真度，几乎与现实无法区分</span>
-                        </li>
-                        <li class="flex items-start gap-2">
-                            <span class="text-cyan-400 mt-1">▸</span>
-                            <span>用于机器人训练、游戏引擎、沉浸式体验</span>
-                        </li>
-                        <li class="flex items-start gap-2">
-                            <span class="text-cyan-400 mt-1">▸</span>
-                            <span>代表：Sora, Gaia-1, 物理引擎</span>
-                        </li>
-                    </ul>
-                    <div class="mt-6 p-4 rounded bg-black/30 border border-cyan-500/30">
-                        <div class="text-xs text-cyan-300 mono mb-1">APPROACH</div>
-                        <div class="text-sm">Video Generation → Neural Rendering → Real-time Simulation</div>
-                    </div>
-                </div>
-            </div>
+        <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl mb-4 text-sm text-blue-800">
+            <strong>游戏说明：</strong> 
+            <ul class="list-disc ml-5 mt-1 space-y-1">
+                <li>题型自动混合：定义理解、缩写解密、概念关联随机出现</li>
+                <li>答对/答错后显示详细知识卡片（含中英文全称、缩写、定义）</li>
+                <li>卡住了可以点击"💡 查看提示"（消耗3分）</li>
+                <li>共10题，满分100分</li>
+            </ul>
+        </div>
+
+        <div class="overflow-x-auto max-h-[300px] rounded-xl border bg-white">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-100 sticky top-0">
+                    <tr>
+                        <th class="p-3 text-left">ID</th>
+                        <th class="p-3 text-left">术语</th>
+                        <th class="p-3 text-left">英文/缩写</th>
+                        <th class="p-3 text-left">类别</th>
+                        <th class="p-3 text-left">难度</th>
+                    </tr>
+                </thead>
+                <tbody id="list-body"></tbody>
+            </table>
         </div>
     </div>
 
-    <!-- 协同工作示意 -->
-    <div class="mt-12 glass-panel rounded-2xl p-8 relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-purple-500 to-cyan-500"></div>
-        <h3 class="text-xl font-bold mb-6 text-center">Embodied AI 中的协同</h3>
-        <div class="flex flex-col md:flex-row items-center justify-between gap-8">
-            <div class="flex-1 text-center">
-                <div class="text-orange-400 font-bold mb-2">Internal Model</div>
-                <div class="text-sm text-gray-400">规划 & 决策</div>
-                <div class="mt-2 text-xs mono text-orange-300/70">V-JEPA 2</div>
-            </div>
-            <div class="flex items-center gap-4">
-                <div class="w-16 h-px bg-gradient-to-r from-orange-500 to-cyan-500"></div>
-                <div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-400">
-                    <span class="text-purple-400 text-xs">↔</span>
-                </div>
-                <div class="w-16 h-px bg-gradient-to-r from-cyan-500 to-orange-500"></div>
-            </div>
-            <div class="flex-1 text-center">
-                <div class="text-cyan-400 font-bold mb-2">External Simulator</div>
-                <div class="text-sm text-gray-400">训练 & 验证</div>
-                <div class="mt-2 text-xs mono text-cyan-300/70">Gaia-1 / Game Engine</div>
-            </div>
-        </div>
-        <p class="mt-6 text-center text-sm text-gray-400 italic">
-            "机器人通过内部世界模型进行规划，同时与模拟外部世界的外部世界模型交互学习"
-        </p>
-    </div>
-</section>
-
-<!-- 第二部分：因果注意力可视化（核心交互） -->
-<section id="causality" class="py-20 bg-black/30 border-y border-white/5">
-    <div class="max-w-6xl mx-auto px-6">
-        <div class="mb-12">
-            <div class="inline-block px-3 py-1 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 text-xs mono mb-4">CRITICAL INSIGHT</div>
-            <h2 class="text-3xl md:text-4xl font-bold mb-4">The Causality Gap</h2>
-            <p class="text-gray-400 max-w-2xl">
-                为什么当前的 Diffusion Transformers (DiT) 不是真正的世界模型？
-                <span class="text-white">因为它们使用了双向（全）注意力，违反了现实的时间不对称性。</span>
-            </p>
+    <!-- 游戏面板 -->
+    <div class="hidden max-w-4xl mx-auto glass rounded-3xl p-8 animate-slide-in" id="game-panel">
+        <div class="flex justify-between items-center mb-6 border-b pb-4">
+            <h2 class="text-2xl font-bold gradient-text">🎮 智能混合挑战</h2>
+            <button onclick="showManager()" class="text-gray-500 hover:text-gray-700 bg-gray-100 px-4 py-2 rounded-full text-sm">← 返回</button>
         </div>
 
-        <div class="grid lg:grid-cols-2 gap-12 items-center">
-            <!-- 左侧：交互式注意力可视化 -->
-            <div class="glass-panel rounded-2xl p-8">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-lg font-bold mono">Attention Pattern Visualizer</h3>
-                    <div class="flex gap-2">
-                        <button onclick="setMode('full')" id="btn-full" class="px-4 py-2 rounded-lg bg-red-500/20 border border-red-500/50 text-red-400 text-sm transition-all hover:bg-red-500/30">
-                            Full Attention (DiT)
-                        </button>
-                        <button onclick="setMode('causal')" id="btn-causal" class="px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-gray-400 text-sm transition-all hover:bg-white/10">
-                            Causal Attention (AR-DiT)
-                        </button>
-                    </div>
-                </div>
-
-                <div class="flex justify-center mb-6">
-                    <div id="attention-viz" class="attention-grid p-4 rounded-xl bg-black/50 border border-white/10">
-                        <!-- 16 cells generated by JS -->
-                    </div>
-                </div>
-
-                <div class="space-y-4 text-sm">
-                    <div id="desc-full" class="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
-                        <div class="flex items-center gap-2 mb-2">
-                            <div class="w-2 h-2 rounded-full bg-red-500"></div>
-                            <span class="font-bold text-red-400">Full Attention (Non-Causal)</span>
-                        </div>
-                        <p class="text-gray-300">
-                            当前帧可以看到<strong>未来帧</strong>的信息（黄色区域）。整个视频序列在生成第一帧后就被预决定了。
-                            无法实现实时交互，因为未来已经"泄露"给了过去。
-                        </p>
-                    </div>
-                    <div id="desc-causal" class="p-4 rounded-lg bg-green-500/10 border border-green-500/20 hidden">
-                        <div class="flex items-center gap-2 mb-2">
-                            <div class="w-2 h-2 rounded-full bg-green-500"></div>
-                            <span class="font-bold text-green-400">Causal Attention (Autoregressive)</span>
-                        </div>
-                        <p class="text-gray-300">
-                            严格的三角掩码确保当前帧只能看到<strong>过去和当前</strong>的信息。
-                            允许帧-by-帧生成，支持实时用户交互（如游戏中），符合物理因果律。
-                        </p>
-                    </div>
-                </div>
-
-                <div class="mt-6 pt-6 border-t border-white/10">
-                    <div class="flex items-center justify-between text-xs mono text-gray-500">
-                        <span>Frame 1</span>
-                        <span>Frame 2</span>
-                        <span>Frame 3</span>
-                        <span>Frame 4</span>
-                    </div>
-                    <div class="mt-2 h-1 bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 rounded-full overflow-hidden">
-                        <div id="timeline-marker" class="h-full w-1/4 bg-gradient-to-r from-red-500 to-orange-500 transition-all duration-500"></div>
-                    </div>
-                </div>
+        <!-- 进度条 -->
+        <div class="mb-6">
+            <div class="flex justify-between text-sm mb-2 font-medium text-gray-600">
+                <span>第 <span id="current-num" class="text-purple-600 font-bold text-lg">1</span> / <span id="total-num">10</span> 题</span>
+                <span id="question-type" class="text-blue-600 font-bold">定义理解</span>
+                <span>🔥 连胜: <span id="streak-display" class="text-orange-600 font-bold">0</span></span>
+                <span class="text-purple-600 font-bold text-lg">得分: <span id="score-display">0</span></span>
             </div>
-
-            <!-- 右侧：技术演进路径 -->
-            <div class="space-y-6">
-                <div class="glass-panel p-6 rounded-xl border-l-4 border-yellow-500">
-                    <h4 class="font-bold text-yellow-400 mb-2">Problem: Quality vs. Causality Trade-off</h4>
-                    <p class="text-sm text-gray-300 mb-3">
-                        传统的自回归模型（如 LLM）是因果的，但使用离散 token 导致视频质量损失严重（VQ 量化误差）。
-                        Diffusion 模型质量高，但缺乏因果性。
-                    </p>
-                    <div class="flex gap-4 text-xs mono">
-                        <div class="flex-1 p-2 rounded bg-black/30 text-center">
-                            <div class="text-red-400">AR (LLM-style)</div>
-                            <div class="text-gray-500">Causal ✓</div>
-                            <div class="text-gray-500">Quality ✗</div>
-                        </div>
-                        <div class="flex items-center text-gray-600">→</div>
-                        <div class="flex-1 p-2 rounded bg-black/30 text-center border border-cyan-500/30">
-                            <div class="text-cyan-400">AR-DiT</div>
-                            <div class="text-green-400">Causal ✓</div>
-                            <div class="text-green-400">Quality ✓</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="glass-panel p-6 rounded-xl">
-                    <h4 class="font-bold text-cyan-400 mb-3">Key Solutions</h4>
-                    <ul class="space-y-3 text-sm">
-                        <li class="flex items-start gap-3">
-                            <span class="mono text-xs bg-cyan-500/10 text-cyan-400 px-2 py-1 rounded">Diffusion Forcing</span>
-                            <span class="text-gray-300">逐帧独立噪声级训练，赋予 Diffusion 模型自回归能力</span>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <span class="mono text-xs bg-purple-500/10 text-purple-400 px-2 py-1 rounded">CausVid</span>
-                            <span class="text-gray-300">将预训练的双向 DiT 改造为因果注意力（AR-DiT）</span>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <span class="mono text-xs bg-green-500/10 text-green-400 px-2 py-1 rounded">MAGI-1</span>
-                            <span class="text-gray-300">原生预训练 AR-DiT，针对因果架构优化基础设施</span>
-                        </li>
-                    </ul>
-                </div>
-
-                <div class="p-4 rounded-xl bg-gradient-to-r from-cyan-900/20 to-blue-900/20 border border-cyan-500/20">
-                    <p class="text-sm text-cyan-200 italic">
-                        "Bringing causal dependencies to video generation is the first step towards true world models."
-                    </p>
-                </div>
+            <div class="bg-gray-200 rounded-full h-2">
+                <div id="progress-bar" class="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
             </div>
         </div>
-    </div>
-</section>
 
-<!-- 第三部分：五维雷达图 -->
-<section id="dimensions" class="py-20 px-6 max-w-7xl mx-auto">
-    <div class="text-center mb-12">
-        <h2 class="text-3xl md:text-4xl font-bold mb-4">Five Dimensions of True World Models</h2>
-        <p class="text-gray-400">真正的视频世界模型必须具备的五个关键属性</p>
-    </div>
-
-    <div class="grid lg:grid-cols-3 gap-8">
-        <!-- 左侧：控制面板 -->
-        <div class="glass-panel rounded-2xl p-6 h-fit">
-            <h3 class="text-lg font-bold mb-6 mono">Model Comparison</h3>
-            <div class="space-y-4">
-                <label class="flex items-center gap-3 p-3 rounded-lg bg-white/5 cursor-pointer hover:bg-white/10 transition-colors">
-                    <input type="checkbox" checked onchange="toggleModel('gpt4')" class="w-4 h-4 rounded border-gray-600 text-cyan-500 focus:ring-cyan-500 bg-transparent">
-                    <div>
-                        <div class="font-bold text-cyan-400">GPT-4V / LWM</div>
-                        <div class="text-xs text-gray-500">Multimodal LLM</div>
-                    </div>
-                </label>
-                <label class="flex items-center gap-3 p-3 rounded-lg bg-white/5 cursor-pointer hover:bg-white/10 transition-colors">
-                    <input type="checkbox" checked onchange="toggleModel('sora')" class="w-4 h-4 rounded border-gray-600 text-purple-500 focus:ring-purple-500 bg-transparent">
-                    <div>
-                        <div class="font-bold text-purple-400">Sora / Veo3</div>
-                        <div class="text-xs text-gray-500">Video Diffusion</div>
-                    </div>
-                </label>
-                <label class="flex items-center gap-3 p-3 rounded-lg bg-white/5 cursor-pointer hover:bg-white/10 transition-colors">
-                    <input type="checkbox" checked onchange="toggleModel('vjepa')" class="w-4 h-4 rounded border-gray-600 text-orange-500 focus:ring-orange-500 bg-transparent">
-                    <div>
-                        <div class="font-bold text-orange-400">V-JEPA 2</div>
-                        <div class="text-xs text-gray-500">Video Joint Embedding</div>
-                    </div>
-                </label>
-                <label class="flex items-center gap-3 p-3 rounded-lg bg-white/5 cursor-pointer hover:bg-white/10 transition-colors">
-                    <input type="checkbox" checked onchange="toggleModel('ideal')" class="w-4 h-4 rounded border-gray-600 text-green-500 focus:ring-green-500 bg-transparent">
-                    <div>
-                        <div class="font-bold text-green-400">Ideal World Model</div>
-                        <div class="text-xs text-gray-500">Future Target</div>
-                    </div>
-                </label>
+        <!-- 题目区域 -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-6 border-2 border-purple-100">
+            <div class="mb-4 flex gap-2">
+                <span id="diff-tag" class="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">入门</span>
+                <span id="cat-tag" class="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600">基础</span>
             </div>
 
-            <div class="mt-8 p-4 rounded-lg bg-black/30 border border-white/10">
-                <div class="text-xs mono text-gray-500 mb-2">DIMENSIONS</div>
-                <div class="space-y-2 text-xs">
-                    <div class="flex justify-between"><span class="text-red-400">Causal</span> <span class="text-gray-600">因果一致性</span></div>
-                    <div class="flex justify-between"><span class="text-blue-400">Interactive</span> <span class="text-gray-600">实时交互</span></div>
-                    <div class="flex justify-between"><span class="text-purple-400">Persistent</span> <span class="text-gray-600">持久记忆</span></div>
-                    <div class="flex justify-between"><span class="text-yellow-400">Real-time</span> <span class="text-gray-600">实时生成</span></div>
-                    <div class="flex justify-between"><span class="text-green-400">Physical</span> <span class="text-gray-600">物理准确</span></div>
+            <h3 id="question-text" class="text-xl font-bold text-gray-800 mb-6 leading-relaxed min-h-[80px]">点击"开始挑战"开始答题...</h3>
+
+            <!-- 提示框 -->
+            <div id="hint-section" class="hidden mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-r-xl">
+                <div class="font-bold text-yellow-800 mb-2 flex items-center gap-2">
+                    <span>💡</span> 提示
+                </div>
+                <div id="hint-text" class="text-gray-700 text-sm"></div>
+            </div>
+
+            <!-- 选项 -->
+            <div id="options-box" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4"></div>
+
+            <!-- 详细解析（答后显示） -->
+            <div id="explanation-box" class="hidden detail-box p-5 rounded-xl mb-4 animate-slide-in">
+                <div class="flex items-center gap-2 mb-4 pb-2 border-b border-blue-200">
+                    <span id="exp-icon" class="text-2xl"></span>
+                    <span id="exp-title" class="font-bold text-lg text-gray-800"></span>
+                </div>
+                
+                <div class="space-y-3">
+                    <div class="bg-white p-4 rounded-lg border border-blue-100">
+                        <div class="text-xs text-gray-500 uppercase tracking-wider mb-1">标准术语</div>
+                        <div class="text-xl font-bold text-gray-800 mb-1" id="exp-term"></div>
+                        <div class="text-sm text-purple-600 font-medium italic" id="exp-en"></div>
+                        <div class="text-xs text-orange-600 mt-1 font-mono bg-orange-50 inline-block px-2 py-1 rounded" id="exp-acronym"></div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-lg border border-blue-100">
+                        <div class="text-xs text-gray-500 uppercase tracking-wider mb-1">概念解释</div>
+                        <div class="text-sm text-gray-700 leading-relaxed" id="exp-def"></div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-lg border border-blue-100 hidden" id="exp-related-box">
+                        <div class="text-xs text-gray-500 uppercase tracking-wider mb-2">相关概念</div>
+                        <div class="flex flex-wrap gap-2" id="exp-related"></div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- 中间：雷达图 -->
-        <div class="lg:col-span-2 glass-panel rounded-2xl p-8 flex items-center justify-center relative min-h-[500px]">
-            <canvas id="radarCanvas" width="600" height="500" class="radar-container"></canvas>
+        <!-- 按钮区 -->
+        <div class="flex justify-between items-center">
+            <button onclick="showHint()" id="hint-btn" class="text-gray-500 hover:text-yellow-600 text-sm font-medium flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-yellow-50 transition">
+                💡 查看提示 (-3分)
+            </button>
             
-            <!-- 浮动标签 -->
-            <div class="absolute top-8 left-8 max-w-xs">
-                <div id="radar-desc" class="text-sm text-gray-300 transition-all duration-300">
-                     toggle 上方复选框对比不同模型在五维空间中的能力边界。
-                    注意 Sora 在物理准确性和因果性上的权衡。
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 维度详解卡片 -->
-    <div class="grid md:grid-cols-5 gap-4 mt-12">
-        <div class="glass-panel p-4 rounded-xl border-t-2 border-red-500 hover:scale-105 transition-transform cursor-pointer group" onmouseenter="highlightAxis(0)">
-            <div class="text-2xl mb-2 group-hover:scale-110 transition-transform">⏳</div>
-            <div class="font-bold text-sm text-red-400 mb-1">Causal</div>
-            <div class="text-xs text-gray-500">因果性</div>
-            <div class="mt-2 text-xs text-gray-400">禁止未来信息泄露到过去</div>
-        </div>
-        <div class="glass-panel p-4 rounded-xl border-t-2 border-blue-500 hover:scale-105 transition-transform cursor-pointer group" onmouseenter="highlightAxis(1)">
-            <div class="text-2xl mb-2 group-hover:scale-110 transition-transform">🎮</div>
-            <div class="font-bold text-sm text-blue-400 mb-1">Interactive</div>
-            <div class="text-xs text-gray-500">交互性</div>
-            <div class="mt-2 text-xs text-gray-400">支持实时动作输入改变未来</div>
-        </div>
-        <div class="glass-panel p-4 rounded-xl border-t-2 border-purple-500 hover:scale-105 transition-transform cursor-pointer group" onmouseenter="highlightAxis(2)">
-            <div class="text-2xl mb-2 group-hover:scale-110 transition-transform">💾</div>
-            <div class="font-bold text-sm text-purple-400 mb-1">Persistent</div>
-            <div class="text-xs text-gray-500">持久性</div>
-            <div class="mt-2 text-xs text-gray-400">长期一致性，物体持久存在</div>
-        </div>
-        <div class="glass-panel p-4 rounded-xl border-t-2 border-yellow-500 hover:scale-105 transition-transform cursor-pointer group" onmouseenter="highlightAxis(3)">
-            <div class="text-2xl mb-2 group-hover:scale-110 transition-transform">⚡</div>
-            <div class="font-bold text-sm text-yellow-400 mb-1">Real-time</div>
-            <div class="text-xs text-gray-500">实时性</div>
-            <div class="mt-2 text-xs text-gray-400">25FPS+ 实时渲染能力</div>
-        </div>
-        <div class="glass-panel p-4 rounded-xl border-t-2 border-green-500 hover:scale-105 transition-transform cursor-pointer group" onmouseenter="highlightAxis(4)">
-            <div class="text-2xl mb-2 group-hover:scale-110 transition-transform">🌍</div>
-            <div class="font-bold text-sm text-green-400 mb-1">Physical</div>
-            <div class="text-xs text-gray-500">物理准确性</div>
-            <div class="mt-2 text-xs text-gray-400">符合物理规律（重力、碰撞）</div>
-        </div>
-    </div>
-</section>
-
-<!-- 第四部分：全景图 -->
-<section id="landscape" class="py-20 bg-black/30 border-t border-white/5">
-    <div class="max-w-7xl mx-auto px-6">
-        <h2 class="text-3xl md:text-4xl font-bold mb-8 text-center">Research Landscape</h2>
-        
-        <div class="glass-panel rounded-2xl p-8 overflow-x-auto">
-            <div class="min-w-[800px]">
-                <div class="flex justify-between items-end mb-8 relative">
-                    <!-- 时间线 -->
-                    <div class="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent"></div>
-                    
-                    <div class="relative z-10 text-center w-1/4">
-                        <div class="w-4 h-4 rounded-full bg-cyan-500 mx-auto mb-2 shadow-[0_0_10px_rgba(0,243,255,0.8)]"></div>
-                        <div class="text-xs mono text-cyan-400">2018</div>
-                        <div class="text-sm font-bold mt-1">World Models</div>
-                        <div class="text-xs text-gray-500">Ha & Schmidhuber</div>
-                    </div>
-                    <div class="relative z-10 text-center w-1/4">
-                        <div class="w-4 h-4 rounded-full bg-purple-500 mx-auto mb-2 shadow-[0_0_10px_rgba(188,19,254,0.8)]"></div>
-                        <div class="text-xs mono text-purple-400">2022</div>
-                        <div class="text-sm font-bold mt-1">I-JEPA</div>
-                        <div class="text-xs text-gray-500">LeCun</div>
-                    </div>
-                    <div class="relative z-10 text-center w-1/4">
-                        <div class="w-4 h-4 rounded-full bg-orange-500 mx-auto mb-2 shadow-[0_0_10px_rgba(255,165,0,0.8)]"></div>
-                        <div class="text-xs mono text-orange-400">2024</div>
-                        <div class="text-sm font-bold mt-1">Sora / V-JEPA</div>
-                        <div class="text-xs text-gray-500">OpenAI / Meta</div>
-                    </div>
-                    <div class="relative z-10 text-center w-1/4">
-                        <div class="w-4 h-4 rounded-full bg-green-500 mx-auto mb-2 shadow-[0_0_10px_rgba(10,255,10,0.8)] animate-pulse"></div>
-                        <div class="text-xs mono text-green-400">2025+</div>
-                        <div class="text-sm font-bold mt-1">AR-DiT / MAGI-1</div>
-                        <div class="text-xs text-gray-500">Causal World Models</div>
-                    </div>
-                </div>
+            <div class="flex gap-3">
+                <button onclick="skipQuestion()" class="text-gray-400 hover:text-gray-600 text-sm px-4 py-2">跳过</button>
+                <button onclick="nextQuestion()" id="next-btn" class="hidden bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition transform hover:scale-105">
+                    下一题 →
+                </button>
+                <button onclick="startGameRound()" id="start-btn" class="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:shadow-xl transition transform hover:scale-105">
+                    开始挑战
+                </button>
             </div>
         </div>
 
-        <!-- 引用原文结论 -->
-        <div class="mt-12 max-w-3xl mx-auto text-center">
-            <blockquote class="text-2xl md:text-3xl font-light italic text-gray-300 leading-relaxed">
-                "A true video world model must be <span class="text-red-400">causal</span>, <span class="text-blue-400">interactive</span>, <span class="text-purple-400">persistent</span>, <span class="text-yellow-400">real-time</span>, and <span class="text-green-400">physically accurate</span>."
-            </blockquote>
-            <div class="mt-4 text-sm text-gray-500 mono">— Towards Video World Models, 2025</div>
+        <!-- 结算 -->
+        <div id="result-box" class="hidden text-center py-8 animate-slide-in">
+            <div class="text-6xl mb-4">🎉</div>
+            <h2 class="text-3xl font-bold gradient-text mb-2">挑战完成!</h2>
+            <div class="grid grid-cols-4 gap-3 max-w-2xl mx-auto my-8">
+                <div class="bg-white p-4 rounded-xl shadow"><div class="text-2xl font-bold text-purple-600" id="final-score">0</div><div class="text-xs text-gray-500">得分</div></div>
+                <div class="bg-white p-4 rounded-xl shadow"><div class="text-2xl font-bold text-orange-600" id="final-streak">0</div><div class="text-xs text-gray-500">最高连胜</div></div>
+                <div class="bg-white p-4 rounded-xl shadow"><div class="text-2xl font-bold text-blue-600" id="final-acc">0%</div><div class="text-xs text-gray-500">正确率</div></div>
+                <div class="bg-white p-4 rounded-xl shadow"><div class="text-2xl font-bold text-green-600" id="final-correct">0</div><div class="text-xs text-gray-500">答对</div></div>
+            </div>
+            <button onclick="startGameRound()" class="bg-purple-600 text-white px-8 py-3 rounded-full font-bold mr-2">再来一轮</button>
+            <button onclick="showManager()" class="bg-gray-200 text-gray-700 px-8 py-3 rounded-full font-bold">返回</button>
         </div>
     </div>
-</section>
 
-<!-- 页脚 -->
-<footer class="py-12 text-center text-gray-600 text-sm border-t border-white/5">
-    <p class="mono">Interactive Survey based on "Towards Video World Models"</p>
-    <p class="mt-2 text-xs">Built for World Model Exploration</p>
-</footer>
+    <script>
+        // 完整68题数据
+        const knowledgeBase = [
+            {id: 1, term: "注意力机制", en: "Attention Mechanism", acronym: null, category: "core", difficulty: 1, definition: "让模型动态关注输入序列不同部分的技术，通过计算Query和Key的相似度来加权Value，是Transformer的核心组件。", hint: "Transformer的核心，解决长距离依赖问题", related: ["Transformer", "Query-Key-Value", "Self-Attention"]},
+            {id: 2, term: "Transformer", en: "Transformer", acronym: null, category: "architecture", difficulty: 1, definition: "2017年Google提出的完全基于注意力机制的序列转换模型，摒弃了RNN和CNN，由编码器和解码器堆叠而成。", hint: "论文标题《Attention Is All You Need》", related: ["BERT", "GPT", "Attention"]},
+            {id: 3, term: "CLIP", en: "Contrastive Language-Image Pre-training", acronym: "CLIP", category: "model", difficulty: 2, definition: "OpenAI开发的多模态模型，通过对比学习在大规模图像-文本对上进行预训练，能够理解图像和文本的语义关联。", hint: "OpenAI 2021年发布的视觉-语言预训练模型", related: ["对比学习", "Zero-shot", "多模态检索"]},
+            {id: 4, term: "BERT", en: "Bidirectional Encoder Representations from Transformers", acronym: "BERT", category: "model", difficulty: 1, definition: "Google开发的双向Transformer编码器，通过Masked Language Model和Next Sentence Prediction进行预训练。", hint: "双向编码器，使用MLM任务", related: ["MLM", "NLP", "Encoder"]},
+            {id: 5, term: "GPT", en: "Generative Pre-trained Transformer", acronym: "GPT", category: "model", difficulty: 1, definition: "OpenAI开发的基于Transformer解码器的生成式预训练语言模型，采用自回归方式从左到右生成文本。", hint: "生成式预训练，Decoder-only架构", related: ["生成模型", "Decoder", "Auto-regressive"]},
+            {id: 6, term: "ViT", en: "Vision Transformer", acronym: "ViT", category: "architecture", difficulty: 2, definition: "将Transformer架构应用于图像分类的方法，将图像切分为16x16的patches作为序列输入，证明Transformer在CV领域的有效性。", hint: "论文《An Image is Worth 16x16 Words》", related: ["Patch", "Image Classification", "Transformer"]},
+            {id: 7, term: "LoRA", en: "Low-Rank Adaptation", acronym: "LoRA", category: "core", difficulty: 3, definition: "一种参数高效微调方法，通过低秩矩阵来近似模型权重更新，冻结原参数只训练低秩矩阵，显著减少显存和存储开销。", hint: "低秩适配，PEFT方法的一种", related: ["PEFT", "Fine-tuning", "Adapter"]},
+            {id: 8, term: "LLaVA", en: "Large Language and Vision Assistant", acronym: "LLaVA", category: "model", difficulty: 2, definition: "将CLIP视觉编码器与LLM（如Vicuna）连接，通过简单的线性投影层实现多模态指令跟随的视觉语言助手。", hint: "Large Language and Vision Assistant", related: ["指令微调", "视觉对话", "CLIP"]},
+            {id: 9, term: "对比学习", en: "Contrastive Learning", acronym: null, category: "core", difficulty: 3, definition: "通过拉近正样本对之间的距离、推远负样本对之间的距离来学习表示的自监督学习方法，使用InfoNCE损失函数。", hint: "InfoNCE Loss，正负样本对", related: ["InfoNCE", "Self-supervised", "Embedding"]},
+            {id: 10, term: "多模态融合", en: "Multimodal Fusion", acronym: null, category: "core", difficulty: 2, definition: "将来自不同模态（如文本、图像、音频）的信息整合到统一表示空间的技术，分为早期融合、晚期融合和中期融合。", hint: "整合图文音的异构数据", related: ["Early Fusion", "Late Fusion", "Joint Embedding"]},
+            
+            // 视频理解 (11-19)
+            {id: 11, term: "TimeSformer", en: "Time-Space Transformer", acronym: null, category: "video", difficulty: 2, definition: "将ViT扩展到视频理解的模型，使用时空分离注意力（Divided Space-Time Attention）处理视频帧序列。", hint: "视频版ViT，时间和空间注意力分开计算", related: ["Video Transformer", "时空注意力", "ViT"]},
+            {id: 12, term: "Video Swin Transformer", en: "Video Swin Transformer", acronym: null, category: "video", difficulty: 3, definition: "将Swin Transformer扩展到视频领域，使用移位窗口（Shifted Windows）进行高效时空建模。", hint: "Swin的视频版本，分层特征", related: ["Swin", "Video", "Hierarchical"]},
+            {id: 13, term: "VideoMAE", en: "Video Masked Autoencoder", acronym: "VideoMAE", category: "video", difficulty: 3, definition: "将MAE扩展到视频，使用极高的掩码率（90%）进行视频预训练，随机遮盖时空tubelet。", hint: "视频版MAE，90%极高掩码率", related: ["MAE", "Self-supervised", "Video"]},
+            {id: 14, term: "时空注意力", en: "Spatial-Temporal Attention", acronym: null, category: "video", difficulty: 2, definition: "同时建模视频空间维度（单帧内）和时间维度（帧间）的注意力机制，捕获视频的时空依赖。", hint: "Space-Time Attention，双维度建模", related: ["TimeSformer", "Video", "Attention"]},
+            {id: 15, term: "SlowFast Network", en: "SlowFast Network", acronym: null, category: "video", difficulty: 3, definition: "使用慢速路径（低帧率高分辨率）和快速路径（高帧率低分辨率）并行处理视频的双分支架构。", hint: "Slow Path + Fast Path，快慢双分支", related: ["Action Recognition", "Video", "Two-Stream"]},
+            {id: 16, term: "动作识别", en: "Action Recognition", acronym: null, category: "video", difficulty: 1, definition: "识别视频中人类动作类别的任务，是视频理解的基础任务之一，通常使用Kinetics等数据集。", hint: "Video Classification，识别动作类别", related: ["Kinetics", "Video", "Classification"]},
+            {id: 17, term: "Sora", en: "Sora", acronym: null, category: "video", difficulty: 2, definition: "OpenAI发布的视频生成模型，使用Diffusion Transformer（DiT）生成高质量长视频，被视为世界模型雏形。", hint: "OpenAI视频生成，DiT架构", related: ["Diffusion", "Video Generation", "DiT"]},
+            {id: 18, term: "VideoPoet", en: "VideoPoet", acronym: null, category: "video", difficulty: 3, definition: "Google的自回归视频生成模型，基于MAGVIT tokenizer和LLM架构，支持零样本视频编辑。", hint: "Google的自回归视频生成", related: ["Google", "Autoregressive", "MAGVIT"]},
+            {id: 19, term: "Tubelet嵌入", en: "Tubelet Embedding", acronym: null, category: "video", difficulty: 3, definition: "从视频中提取时空立方体（连续多帧的图像块）作为Transformer输入的嵌入方法，相比2D Patch增加了时序维度。", hint: "3D Patch，时空立方体", related: ["VideoMAE", "3D Convolution", "Patch"]},
 
-<script>
-// 初始化 GSAP
-gsap.registerPlugin(ScrollTrigger);
+            // 世界模型 (20-28)
+            {id: 20, term: "JEPA", en: "Joint Embedding Predictive Architecture", acronym: "JEPA", category: "world-model", difficulty: 3, definition: "LeCun提出的世界模型架构，在表征空间（而非像素空间）进行预测，包括I-JEPA和V-JEPA。", hint: "Joint Embedding Predictive Architecture", related: ["LeCun", "World Model", "Representation"]},
+            {id: 21, term: "I-JEPA", en: "Image Joint Embedding Predictive Architecture", acronym: "I-JEPA", category: "world-model", difficulty: 3, definition: "Meta提出的图像版JEPA，通过预测掩码目标的抽象表征学习视觉常识，优于像素重建方法。", hint: "图像版JEPA，Meta出品", related: ["JEPA", "Meta", "Self-supervised"]},
+            {id: 22, term: "V-JEPA", en: "Video Joint Embedding Predictive Architecture", acronym: "V-JEPA", category: "world-model", difficulty: 3, definition: "Meta提出的视频版JEPA，通过掩码视频预测学习物理世界常识，无需文本监督。", hint: "视频版JEPA，学习物理常识", related: ["JEPA", "Video", "Physical World"]},
+            {id: 23, term: "世界模型", en: "World Model", acronym: null, category: "world-model", difficulty: 2, definition: "能够预测环境未来状态的内部抽象模型，或高保真模拟世界细节的外部模拟器，用于规划和推理。", hint: "分 Understanding 和 Simulation 两种范式", related: ["JEPA", "Sora", "Simulation"]},
+            {id: 24, term: "因果注意力", en: "Causal Attention", acronym: null, category: "world-model", difficulty: 3, definition: "确保未来token不会影响过去token的注意力掩码机制，是构建因果世界模型（Causal World Model）的关键。", hint: "Causal Masking，三角形掩码", related: ["Attention", "Causal", "GPT"]},
+            {id: 25, term: "DiT", en: "Diffusion Transformer", acronym: "DiT", category: "world-model", difficulty: 3, definition: "将Transformer用于扩散模型backbone的架构，用Transformer替换传统的U-Net，Sora基于此架构。", hint: "Diffusion + Transformer", related: ["Sora", "Diffusion", "Latent"]},
+            {id: 26, term: "具身智能", en: "Embodied AI", acronym: null, category: "world-model", difficulty: 2, definition: "具有物理身体、能与环境交互的智能体，世界模型是其实现长期规划的关键组件。", hint: "Embodied，有身体的AI", related: ["Robotics", "World Model", "Agent"]},
+            {id: 27, term: "涌现能力", en: "Emergent Ability", acronym: null, category: "core", difficulty: 2, definition: "大模型在规模达到某个阈值后突然展现的新能力，如指令跟随、多步推理等，是Scaling Law的结果。", hint: "Emergent，规模带来的质变", related: ["Scaling Law", "Large Model", "Ability"]},
+            {id: 28, term: "RLHF", en: "Reinforcement Learning from Human Feedback", acronym: "RLHF", category: "core", difficulty: 3, definition: "通过人类偏好数据训练奖励模型，再使用PPO等强化学习算法优化语言模型的技术，用于对齐人类价值观。", hint: "人类反馈强化学习，三阶段训练", related: ["PPO", "Reward Model", "Alignment"]},
 
-// 注意力可视化逻辑
-let currentMode = 'full';
-const grid = document.getElementById('attention-viz');
-const cells = [];
+            // 其他核心概念 (29-50)
+            {id: 29, term: "跨模态检索", en: "Cross-modal Retrieval", acronym: null, category: "task", difficulty: 2, definition: "使用一种模态的数据作为查询，检索另一种模态的数据，例如用文本搜索图片或用图片搜索文本。", hint: "Text-to-Image Retrieval，模态间搜索", related: ["CLIP", "Image-Text", "Embedding"]},
+            {id: 30, term: "视觉问答", en: "Visual Question Answering", acronym: "VQA", category: "task", difficulty: 2, definition: "给定一张图片和一个关于该图片的自然语言问题，模型需要生成正确的自然语言答案的多模态任务。", hint: "Visual QA，看图回答", related: ["Multimodal", "QA", "Reasoning"]},
+            {id: 31, term: "零样本学习", en: "Zero-shot Learning", acronym: null, category: "core", difficulty: 3, definition: "模型在训练时没有见过某类别的样本，但能够通过语义描述或其他模态信息识别该类别的能力。", hint: "Zero-shot，无样本识别", related: ["Generalization", "CLIP", "Transfer"]},
+            {id: 32, term: "上下文学习", en: "In-context Learning", acronym: "ICL", category: "core", difficulty: 2, definition: "大模型通过提示中的少量示例（few-shot）或指令（zero-shot）直接学习任务的能力，无需梯度更新。", hint: "In-context，Few-shot Learning", related: ["Prompting", "Few-shot", "LLM"]},
+            {id: 33, term: "指令微调", en: "Instruction Tuning", acronym: null, category: "core", difficulty: 2, definition: "使用自然语言指令格式化的数据集对预训练模型进行微调，使模型能够更好地理解并遵循人类指令。", hint: "Instruction Following，指令跟随", related: ["LLaVA", "Chat", "Alignment"]},
+            {id: 34, term: "RAG", en: "Retrieval-Augmented Generation", acronym: "RAG", category: "core", difficulty: 2, definition: "结合外部知识检索与模型生成的技术，先从知识库检索相关文档，再基于检索内容生成回答，减少幻觉。", hint: "检索增强生成，先查资料再回答", related: ["Knowledge Base", "Hallucination", "LLM"]},
+            {id: 35, term: "多模态幻觉", en: "Multimodal Hallucination", acronym: null, category: "core", difficulty: 2, definition: "多模态模型生成与输入图像内容不符的描述或回答的现象，如描述图中不存在的物体。", hint: "Hallucination，AI胡说八道", related: ["Faithfulness", "POPE", "CHAIR"]},
+            {id: 36, term: "DPO", en: "Direct Preference Optimization", acronym: "DPO", category: "core", difficulty: 3, definition: "无需显式训练奖励模型，直接使用偏好数据优化语言模型的方法，通过推导将RL问题转化为分类问题。", hint: "跳过Reward Model，直接优化", related: ["RLHF", "Preference", "Optimization"]},
+            {id: 37, term: "知识蒸馏", en: "Knowledge Distillation", acronym: "KD", category: "core", difficulty: 3, definition: "将大模型（教师）的知识迁移到小模型（学生）的技术，通过软标签（Soft Labels）或特征匹配实现。", hint: "Teacher-Student，软化标签", related: ["Compression", "Transfer", "Soft Labels"]},
+            {id: 38, term: "量化", en: "Quantization", acronym: null, category: "core", difficulty: 3, definition: "将模型权重和激活从高精度浮点数（如FP32）转换为低精度（如INT8/INT4）的技术，减少显存和计算。", hint: "INT8/INT4，模型压缩", related: ["Efficiency", "INT8", "Edge Deployment"]},
+            {id: 39, term: "RoPE", en: "Rotary Position Embedding", acronym: "RoPE", category: "core", difficulty: 3, definition: "通过旋转矩阵将位置信息编码到Query和Key向量中的位置编码方法，具有外推性和相对位置感知能力。", hint: "Rotary，旋转位置编码，LLaMA使用", related: ["LLaMA", "Position", "Extrapolation"]},
+            {id: 40, term: "SwiGLU", en: "SwiGLU", acronym: null, category: "core", difficulty: 3, definition: "PaLM和LLaMA等模型使用的激活函数，结合Swish和门控线性单元（GLU），通常表现优于ReLU和GELU。", hint: "Swish + GLU", related: ["Activation", "LLaMA", "PaLM"]},
+            {id: 41, term: "RMSNorm", en: "Root Mean Square Layer Normalization", acronym: "RMSNorm", category: "core", difficulty: 3, definition: "LLaMA等模型使用的归一化方法，去除LayerNorm的均值偏移和偏置项，仅使用均方根进行归一化。", hint: "均方根归一化，去均值", related: ["Normalization", "LLaMA", "LayerNorm"]},
+            {id: 42, term: "GQA", en: "Grouped-Query Attention", acronym: "GQA", category: "architecture", difficulty: 3, definition: "LLaMA-2-70B等使用的注意力机制，多个Query头共享一组Key-Value头，减少推理时的KV缓存显存。", hint: "Grouped Query，共享K/V", related: ["LLaMA-2", "Memory", "Attention"]},
+            {id: 43, term: "状态空间模型", en: "State Space Model", acronym: "SSM", category: "architecture", difficulty: 3, definition: "一类通过隐状态压缩历史信息的序列建模架构，如Mamba通过选择性扫描实现线性复杂度。", hint: "State Space，Mamba架构", related: ["Mamba", "Linear Attention", "Long Sequence"]},
+            {id: 44, term: "VLA", en: "Vision-Language-Action Model", acronym: "VLA", category: "model", difficulty: 3, definition: "整合视觉感知、语言理解和机器人动作执行的端到端模型，用于具身智能和机器人控制。", hint: "Vision-Language-Action，机器人", related: ["Robotics", "RT-2", "PaLM-E"]},
+            {id: 45, term: "灾难性遗忘", en: "Catastrophic Forgetting", acronym: null, category: "core", difficulty: 3, definition: "神经网络在学习新任务时性能在旧任务上急剧下降的现象，是多模态大模型持续学习面临的核心挑战。", hint: "Catastrophic，学了新的忘了旧的", related: ["Continual Learning", "Replay", "EWC"]},
+            {id: 46, term: "感知重采样器", en: "Perceiver Resampler", acronym: null, category: "architecture", difficulty: 3, definition: "Flamingo等模型使用的视觉特征压缩模块，将变长的视觉特征序列映射为固定数量的视觉token。", hint: "Perceiver，压缩成固定token", related: ["Flamingo", "Compression", "Fixed Size"]},
+            {id: 47, term: "冻结编码器", en: "Frozen Encoder", acronym: null, category: "core", difficulty: 2, definition: "在多模态预训练中保持视觉编码器和语言模型参数冻结，只训练中间对齐层的策略，保留预训练知识。", hint: "Frozen Backbone，冻住不训练", related: ["BLIP-2", "Efficient", "Parameter-Efficient"]},
+            {id: 48, term: "模态对齐", en: "Modality Alignment", acronym: null, category: "core", difficulty: 2, definition: "将不同模态（如图像和文本）的特征映射到共享语义空间的技术，使得语义相似的内容在空间中接近。", hint: "Alignment，向量空间对齐", related: ["CLIP", "Embedding", "Contrastive"]},
+            {id: 49, term: "交叉注意力", en: "Cross-Attention", acronym: null, category: "core", difficulty: 2, definition: "Transformer中Query来自一个模态序列，Key和Value来自另一个模态序列的注意力机制，实现模态间交互。", hint: "Cross，Q来自文本K/V来自图", related: ["Multi-modal", "Attention", "Fusion"]},
+            {id: 50, term: "掩码图像建模", en: "Masked Image Modeling", acronym: "MIM", category: "core", difficulty: 2, definition: "BERT在视觉领域的扩展，随机遮盖图像patch让模型预测原始像素或特征，用于视觉自监督预训练。", hint: "Masked Image，图像完形填空", related: ["MAE", "BEiT", "Self-supervised"]},
+            {id: 51, term: "BLIP", en: "Bootstrapping Language-Image Pre-training", acronym: "BLIP", category: "model", difficulty: 3, definition: "Salesforce提出的统一视觉语言理解和生成框架，通过引导滤波器（CapFilt）从噪声数据中提取高质量样本。", hint: "Bootstrapping，CapFilt过滤", related: ["CapFilt", "Salesforce", "Filter"]},
+            {id: 52, term: "细粒度对齐", en: "Fine-grained Alignment", acronym: null, category: "core", difficulty: 3, definition: "在patch-word或object-phrase级别建立图像区域与文本描述的对应关系，而非整图-全文的粗粒度对齐。", hint: "Fine-grained，Patch-Word对齐", related: ["Grounding", "Region", "Token"]},
+            {id: 53, term: "自回归模型", en: "Autoregressive Model", acronym: null, category: "core", difficulty: 2, definition: "基于先前生成的token来预测下一个token的生成方式，保证生成序列的因果性和连贯性。", hint: "Auto-regressive，从左到右", related: ["GPT", "Causal", "Generation"]},
+            {id: 54, term: "扩散模型", en: "Diffusion Model", acronym: null, category: "core", difficulty: 3, definition: "通过逐步去噪生成数据的概率模型，用于图像和视频生成，如DDPM、Stable Diffusion等。", hint: "Diffusion，逐步去噪", related: ["DDPM", "Noise", "Score-based"]},
+            {id: 55, term: "门控交叉注意力", en: "Gated Cross-Attention", acronym: null, category: "architecture", difficulty: 3, definition: "Flamingo引入的机制，使用tanh门控来控制视觉信息流入语言模型的强度，保持语言模型稳定性。", hint: "Gated，tanh门控控制信息流", related: ["Flamingo", "Gating", "Integration"]},
+            {id: 56, term: "动态分辨率", en: "Dynamic Resolution", acronym: null, category: "core", difficulty: 2, definition: "模型根据输入图像的复杂度动态调整处理分辨率的技术，如将大图切分为多个子图处理。", hint: "Dynamic，任意分辨率处理", related: ["LLaVA-1.5", "AnyRes", "High-resolution"]},
+            {id: 57, term: "视觉专家模块", en: "Vision Expert Module", acronym: null, category: "architecture", difficulty: 3, definition: "CogVLM在Transformer每层插入的模块，包含并行的视觉QKV和MLP，实现视觉特征与语言特征的深度融合。", hint: "Expert Module，每层的视觉专家", related: ["CogVLM", "Deep Fusion", "Per-layer"]},
+            {id: 58, term: "模态连接器", en: "Modality Connector", acronym: null, category: "architecture", difficulty: 2, definition: "连接不同模态编码器和语言模型的中间模块，如Q-Former、线性投影层或MLP适配器，负责特征对齐。", hint: "Connector，对齐层", related: ["Q-Former", "BLIP-2", "Projection"]},
+            {id: 59, term: "指令跟随能力", en: "Instruction Following", acronym: null, category: "core", difficulty: 1, definition: "模型理解并执行自然语言指令的能力，是多模态大模型区别于传统视觉模型的关键特征。", hint: "Instruction，听指令做事", related: ["ChatGPT", "Alignment", "Tuning"]},
+            {id: 60, term: "多模态思维链", en: "Multimodal Chain-of-Thought", acronym: "M-CoT", category: "core", difficulty: 3, definition: "将思维链提示扩展到多模态场景，让模型生成中间推理步骤来解决复杂的视觉问答或视觉推理任务。", hint: "Multimodal CoT，逐步推理", related: ["CoT", "Reasoning", "Step-by-step"]},
+            {id: 61, term: "Sigmoid损失", en: "Sigmoid Loss", acronym: null, category: "core", difficulty: 3, definition: "使用sigmoid函数而非softmax计算相似度的对比学习损失，对负样本对独立建模，如SigLIP使用。", hint: "Sigmoid对比，非softmax", related: ["SigLIP", "Contrastive", "Pairwise"]},
+            {id: 62, term: "群组相对策略优化", en: "Group Relative Policy Optimization", acronym: "GRPO", category: "core", difficulty: 3, definition: "DeepSeek使用的强化学习算法，无需价值网络，通过组内样本相对奖励估计baseline，减少显存占用。", hint: "Group Relative，组内比较", related: ["DeepSeek", "RL", "PPO"]},
+            {id: 63, term: "Video-LLaMA", en: "Video-LLaMA", acronym: null, category: "video", difficulty: 2, definition: "将LLaVA扩展到视频，使用Video Q-Former和Audio Q-Former分别处理视频和音频，实现音视频理解。", hint: "视频的LLaVA，音视频理解", related: ["Video", "Audio", "Q-Former"]},
+            {id: 64, term: "VideoChat", en: "VideoChat", acronym: null, category: "video", difficulty: 2, definition: "早期视频理解模型，使用Q-Former提取视频帧特征并与LLM对齐，支持视频对话。", hint: "早期视频对话模型", related: ["Q-Former", "Video Dialogue", "Early Work"]},
+            {id: 65, term: "因果世界模型", en: "Causal World Model", acronym: null, category: "world-model", difficulty: 3, definition: "具有因果推理能力的视频世界模型，能够基于当前状态预测未来状态，支持交互和非确定的未来。", hint: "Causal，因果推理", related: ["Causality", "Video", "Interaction"]},
+            {id: 66, term: "空间智能", en: "Spatial Intelligence", acronym: null, category: "world-model", difficulty: 2, definition: "理解和推理三维空间关系的能力，是世界模型理解物理环境的关键组件，涉及深度、距离、方位等。", hint: "Spatial，3D空间理解", related: ["3D Vision", "Depth", "Physical World"]},
+            {id: 67, term: "世界模拟器", en: "World Simulator", acronym: null, category: "world-model", difficulty: 2, definition: "高保真模拟世界细节的环境，用于训练智能体而不受真实世界成本和风险限制，如游戏引擎、神经模拟器。", hint: "Simulator，高保真模拟", related: ["Simulation", "Game Engine", "Training"]},
+            {id: 68, term: "内部世界模型", en: "Internal World Model", acronym: null, category: "world-model", difficulty: 3, definition: "大脑中预测未来事件的抽象认知模型（如JEPA），与外部世界模拟器（如Sora）相对，用于快速推理。", hint: "Internal，大脑中的模型", related: ["JEPA", "Cognitive", "Brain"]}
+        ];
 
-// 创建 4x4 网格（模拟 4个时间步的注意力）
-for (let i = 0; i < 16; i++) {
-    const cell = document.createElement('div');
-    cell.className = 'attention-cell';
-    cell.dataset.pos = i;
-    grid.appendChild(cell);
-    cells.push(cell);
-}
+        // 游戏状态
+        let questions = [];
+        let currentIdx = 0;
+        let score = 0;
+        let streak = 0;
+        let maxStreak = 0;
+        let correctCount = 0;
+        let answeredCount = 0;
+        let usedHint = false;
+        let currentQuestionData = null; // 存储当前题目的所有信息
 
-function setMode(mode) {
-    currentMode = mode;
-    const fullBtn = document.getElementById('btn-full');
-    const causalBtn = document.getElementById('btn-causal');
-    const fullDesc = document.getElementById('desc-full');
-    const causalDesc = document.getElementById('desc-causal');
-    const marker = document.getElementById('timeline-marker');
-    
-    if (mode === 'full') {
-        fullBtn.className = "px-4 py-2 rounded-lg bg-red-500/20 border border-red-500/50 text-red-400 text-sm transition-all";
-        causalBtn.className = "px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-gray-400 text-sm transition-all";
-        fullDesc.classList.remove('hidden');
-        causalDesc.classList.add('hidden');
-        marker.className = "h-full w-full bg-gradient-to-r from-red-500 to-orange-500 transition-all duration-500";
-        
-        // Full attention: 全激活（上三角）
-        cells.forEach((cell, idx) => {
-            const row = Math.floor(idx / 4);
-            const col = idx % 4;
-            setTimeout(() => {
-                if (row <= col) {
-                    cell.classList.add('active');
-                    cell.classList.remove('causal');
-                } else {
-                    cell.classList.remove('active');
-                }
-            }, idx * 20);
-        });
-    } else {
-        causalBtn.className = "px-4 py-2 rounded-lg bg-green-500/20 border border-green-500/50 text-green-400 text-sm transition-all";
-        fullBtn.className = "px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-gray-400 text-sm transition-all";
-        causalDesc.classList.remove('hidden');
-        fullDesc.classList.add('hidden');
-        marker.className = "h-full w-1/4 bg-gradient-to-r from-green-500 to-cyan-500 transition-all duration-500";
-        
-        // Causal attention: 严格下三角
-        cells.forEach((cell, idx) => {
-            const row = Math.floor(idx / 4);
-            const col = idx % 4;
-            setTimeout(() => {
-                cell.classList.remove('active');
-                if (col <= row) {
-                    cell.classList.add('causal');
-                    cell.classList.add('active');
-                } else {
-                    cell.classList.remove('causal');
-                    cell.classList.remove('active');
-                }
-            }, idx * 20);
-        });
-    }
-}
-
-// 初始化 Full 模式
-setMode('full');
-
-// 雷达图逻辑
-const canvas = document.getElementById('radarCanvas');
-const ctx = canvas.getContext('2d');
-const centerX = canvas.width / 2;
-const centerY = canvas.height / 2;
-const radius = 180;
-
-const dimensions = ['Causal', 'Interactive', 'Persistent', 'Real-time', 'Physical'];
-const angleStep = (Math.PI * 2) / 5;
-
-const models = {
-    gpt4: {
-        name: 'GPT-4V/LWM',
-        color: 'rgba(0, 243, 255, 0.5)',
-        border: '#00f3ff',
-        data: [0.3, 0.4, 0.6, 0.9, 0.2]  // 高实时，低物理
-    },
-    sora: {
-        name: 'Sora/Veo3',
-        color: 'rgba(188, 19, 254, 0.5)',
-        border: '#bc13fe',
-        data: [0.1, 0.1, 0.3, 0.2, 0.7]  // 高物理，低交互/因果
-    },
-    vjepa: {
-        name: 'V-JEPA 2',
-        color: 'rgba(255, 165, 0, 0.5)',
-        border: '#ffa500',
-        data: [0.8, 0.3, 0.7, 0.6, 0.5]  // 平衡的"理解型"
-    },
-    ideal: {
-        name: 'Ideal World Model',
-        color: 'rgba(10, 255, 10, 0.2)',
-        border: '#0aff0a',
-        data: [1.0, 1.0, 1.0, 1.0, 1.0]  // 全满
-    }
-};
-
-let activeModels = { gpt4: true, sora: true, vjepa: true, ideal: true };
-
-function drawRadar() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // 绘制背景网格
-    for (let i = 1; i <= 5; i++) {
-        ctx.beginPath();
-        ctx.strokeStyle = i === 5 ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.05)';
-        ctx.lineWidth = i === 5 ? 2 : 1;
-        for (let j = 0; j <= 5; j++) {
-            const angle = j * angleStep - Math.PI / 2;
-            const x = centerX + Math.cos(angle) * (radius * i / 5);
-            const y = centerY + Math.sin(angle) * (radius * i / 5);
-            if (j === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
+        // 初始化列表
+        function init() {
+            const tbody = document.getElementById('list-body');
+            tbody.innerHTML = knowledgeBase.map(item => `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-3 text-xs font-mono text-gray-500">#${item.id}</td>
+                    <td class="p-3 font-bold text-gray-800">${item.term}</td>
+                    <td class="p-3 text-sm text-gray-600">
+                        ${item.en}
+                        ${item.acronym ? `<span class="ml-2 text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded font-mono">${item.acronym}</span>` : ''}
+                    </td>
+                    <td class="p-3"><span class="text-xs px-2 py-1 rounded-full ${getCategoryColor(item.category)}">${item.category}</span></td>
+                    <td class="p-3"><span class="text-xs font-bold ${getDifficultyColor(item.difficulty)}">${item.difficulty === 1 ? '入门' : item.difficulty === 2 ? '进阶' : '专家'}</span></td>
+                </tr>
+            `).join('');
         }
-        ctx.stroke();
-    }
-    
-    // 绘制轴线和标签
-    dimensions.forEach((dim, i) => {
-        const angle = i * angleStep - Math.PI / 2;
-        const x = centerX + Math.cos(angle) * radius;
-        const y = centerY + Math.sin(angle) * radius;
-        
-        ctx.beginPath();
-        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-        ctx.moveTo(centerX, centerY);
-        ctx.lineTo(x, y);
-        ctx.stroke();
-        
-        // 标签
-        const labelX = centerX + Math.cos(angle) * (radius + 30);
-        const labelY = centerY + Math.sin(angle) * (radius + 30);
-        ctx.fillStyle = getDimColor(i);
-        ctx.font = 'bold 12px Inter';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(dim, labelX, labelY);
-    });
-    
-    // 绘制模型数据
-    Object.entries(models).forEach(([key, model]) => {
-        if (!activeModels[key]) return;
-        
-        ctx.beginPath();
-        model.data.forEach((value, i) => {
-            const angle = i * angleStep - Math.PI / 2;
-            const x = centerX + Math.cos(angle) * (radius * value);
-            const y = centerY + Math.sin(angle) * (radius * value);
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-        });
-        ctx.closePath();
-        ctx.fillStyle = model.color;
-        ctx.fill();
-        ctx.strokeStyle = model.border;
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        
-        // 绘制数据点
-        model.data.forEach((value, i) => {
-            const angle = i * angleStep - Math.PI / 2;
-            const x = centerX + Math.cos(angle) * (radius * value);
-            const y = centerY + Math.sin(angle) * (radius * value);
-            ctx.beginPath();
-            ctx.arc(x, y, 4, 0, Math.PI * 2);
-            ctx.fillStyle = model.border;
-            ctx.fill();
-        });
-    });
-}
 
-function getDimColor(idx) {
-    const colors = ['#ff4444', '#4444ff', '#aa44ff', '#ffaa00', '#44ff44'];
-    return colors[idx];
-}
+        function getCategoryColor(cat) {
+            const colors = {
+                'core': 'bg-blue-100 text-blue-700',
+                'model': 'bg-purple-100 text-purple-700',
+                'architecture': 'bg-green-100 text-green-700',
+                'task': 'bg-yellow-100 text-yellow-700',
+                'video': 'bg-pink-100 text-pink-700',
+                'world-model': 'bg-orange-100 text-orange-700'
+            };
+            return colors[cat] || 'bg-gray-100 text-gray-700';
+        }
 
-function toggleModel(model) {
-    activeModels[model] = !activeModels[model];
-    drawRadar();
-}
+        function getDifficultyColor(diff) {
+            return diff === 1 ? 'text-green-600' : diff === 2 ? 'text-yellow-600' : 'text-red-600';
+        }
 
-function highlightAxis(idx) {
-    // 可以添加高亮特定维度的逻辑
-    const dimNames = ['因果性: 时间顺序的严格遵守', '交互性: 动作影响世界状态', 
-                      '持久性: 物体存在的一致性记忆', '实时性: 流式生成速度', 
-                      '物理性: 符合牛顿力学等规律'];
-    document.getElementById('radar-desc').textContent = dimNames[idx];
-    document.getElementById('radar-desc').style.color = getDimColor(idx);
-}
+        // 开始游戏
+        function startGame() {
+            document.getElementById('manager').classList.add('hidden');
+            document.getElementById('game-panel').classList.remove('hidden');
+            startGameRound();
+        }
 
-// 初始化雷达图
-drawRadar();
+        function showManager() {
+            document.getElementById('game-panel').classList.add('hidden');
+            document.getElementById('manager').classList.remove('hidden');
+        }
 
-// GSAP 动画
-gsap.from(".flip-card", {
-    scrollTrigger: {
-        trigger: "#paradigms",
-        start: "top 80%",
-    },
-    y: 100,
-    opacity: 0,
-    duration: 1,
-    stagger: 0.2,
-    ease: "power3.out"
-});
+        // 初始化一轮游戏
+        function startGameRound() {
+            // 随机选10题，深拷贝
+            const shuffled = [...knowledgeBase].sort(() => Math.random() - 0.5);
+            const selected = shuffled.slice(0, 10);
+            
+            // 为每题生成题型和问题
+            questions = selected.map(item => {
+                const types = ['definition', 'acronym', 'association'];
+                // 没有缩写的题目不生成缩写题
+                const availableTypes = item.acronym ? types : ['definition', 'association'];
+                const type = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+                
+                return generateQuestionData(item, type);
+            });
+            
+            currentIdx = 0;
+            score = 0;
+            streak = 0;
+            maxStreak = 0;
+            correctCount = 0;
+            answeredCount = 0;
+            
+            // 重置UI
+            document.getElementById('result-box').classList.add('hidden');
+            document.getElementById('start-btn').classList.add('hidden');
+            document.getElementById('explanation-box').classList.add('hidden');
+            
+            showQuestion();
+        }
 
-gsap.from("#causality .glass-panel", {
-    scrollTrigger: {
-        trigger: "#causality",
-        start: "top 80%",
-    },
-    x: -50,
-    opacity: 0,
-    duration: 1,
-    ease: "power3.out"
-});
+        // 生成题目数据
+        function generateQuestionData(item, type) {
+            let question, options, correctAnswer, displayType;
+            
+            switch(type) {
+                case 'definition':
+                    // 定义理解：给出定义，猜术语
+                    question = item.definition;
+                    correctAnswer = item.term;
+                    options = generateOptions(item, 'term', 4);
+                    displayType = '定义理解';
+                    break;
+                    
+                case 'acronym':
+                    // 缩写解密：给出缩写，猜全称
+                    question = `这个缩写 "${item.acronym}" 代表什么概念？\n\n（提示：${getCategoryHint(item.category)}）`;
+                    correctAnswer = item.term;
+                    // 选项混用术语和英文全称增加难度
+                    const mixedOptions = [
+                        item.term,
+                        ...knowledgeBase.filter(i => i.id !== item.id).sort(() => Math.random() - 0.5).slice(0, 3).map(i => i.term)
+                    ];
+                    options = mixedOptions.sort(() => Math.random() - 0.5);
+                    displayType = '缩写解密';
+                    break;
+                    
+                case 'association':
+                    // 概念关联：给出相关概念提示
+                    const related = item.related || [];
+                    const relatedHint = related.length > 0 ? related.slice(0, 2).join('、') : getCategoryHint(item.category);
+                    question = `这个${getCategoryName(item.category)}与 "${relatedHint}" 密切相关，它的名字是？\n\n（难度：${item.difficulty === 1 ? '入门' : item.difficulty === 2 ? '进阶' : '专家'}）`;
+                    correctAnswer = item.term;
+                    options = generateOptions(item, 'term', 4);
+                    displayType = '概念关联';
+                    break;
+            }
+            
+            return {
+                data: item,
+                type: type,
+                displayType: displayType,
+                question: question,
+                correctAnswer: correctAnswer,
+                options: options,
+                hint: item.hint,
+                definition: item.definition
+            };
+        }
 
-// 鼠标跟随粒子效果
-document.addEventListener('mousemove', (e) => {
-    if (Math.random() > 0.9) {
-        const particle = document.createElement('div');
-        particle.className = 'particle';
-        particle.style.left = e.clientX + 'px';
-        particle.style.top = e.clientY + 'px';
-        document.body.appendChild(particle);
-        
-        gsap.to(particle, {
-            y: e.clientY + 100,
-            opacity: 0,
-            duration: 1.5,
-            onComplete: () => particle.remove()
-        });
-    }
-});
-</script>
+        function getCategoryHint(cat) {
+            const hints = {
+                'core': '基础概念',
+                'model': '模型架构',
+                'architecture': '技术架构',
+                'task': '多模态任务',
+                'video': '视频理解',
+                'world-model': '世界模型'
+            };
+            return hints[cat] || '多模态学习';
+        }
 
+        function getCategoryName(cat) {
+            return getCategoryHint(cat);
+        }
+
+        function generateOptions(correctItem, field, count) {
+            const wrong = knowledgeBase.filter(i => i.id !== correctItem.id).sort(() => Math.random() - 0.5);
+            const selected = wrong.slice(0, count - 1);
+            return [...selected.map(i => i[field]), correctItem[field]].sort(() => Math.random() - 0.5);
+        }
+
+        // 显示当前题目
+        function showQuestion() {
+            if(currentIdx >= questions.length) {
+                endGame();
+                return;
+            }
+            
+            currentQuestionData = questions[currentIdx];
+            usedHint = false;
+            
+            // 更新进度
+            document.getElementById('current-num').textContent = currentIdx + 1;
+            document.getElementById('total-num').textContent = questions.length;
+            document.getElementById('question-type').textContent = currentQuestionData.displayType;
+            document.getElementById('score-display').textContent = score;
+            document.getElementById('streak-display').textContent = streak;
+            
+            // 更新进度条
+            document.getElementById('progress-bar').style.width = ((currentIdx / questions.length) * 100) + '%';
+            
+            // 更新标签
+            const item = currentQuestionData.data;
+            document.getElementById('diff-tag').textContent = item.difficulty === 1 ? '入门' : item.difficulty === 2 ? '进阶' : '专家';
+            document.getElementById('diff-tag').className = `px-3 py-1 rounded-full text-xs font-bold ${item.difficulty === 1 ? 'bg-green-100 text-green-700' : item.difficulty === 2 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`;
+            
+            document.getElementById('cat-tag').textContent = getCategoryName(item.category);
+            document.getElementById('cat-tag').className = `px-3 py-1 rounded-full text-xs font-bold ${getCategoryColor(item.category)}`;
+            
+            // 更新问题文本
+            document.getElementById('question-text').textContent = currentQuestionData.question;
+            
+            // 重置提示和解析
+            document.getElementById('hint-section').classList.add('hidden');
+            document.getElementById('explanation-box').classList.add('hidden');
+            document.getElementById('next-btn').classList.add('hidden');
+            document.getElementById('hint-btn').disabled = false;
+            document.getElementById('hint-btn').classList.remove('opacity-50');
+            
+            // 生成选项
+            const optionsBox = document.getElementById('options-box');
+            optionsBox.innerHTML = '';
+            currentQuestionData.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn bg-white p-4 rounded-xl text-left font-medium text-gray-700 w-full';
+                btn.textContent = opt;
+                btn.onclick = () => checkAnswer(opt, btn);
+                optionsBox.appendChild(btn);
+            });
+        }
+
+        // 检查答案
+        function checkAnswer(selected, btnElement) {
+            const isCorrect = selected === currentQuestionData.correctAnswer;
+            const item = currentQuestionData.data;
+            
+            // 禁用所有选项并显示颜色
+            document.querySelectorAll('.option-btn').forEach(b => {
+                b.disabled = true;
+                if(b.textContent === currentQuestionData.correctAnswer) {
+                    b.className = 'bg-green-100 border-2 border-green-500 p-4 rounded-xl text-left font-bold text-green-800 w-full';
+                } else if(b === btnElement && !isCorrect) {
+                    b.className = 'bg-red-100 border-2 border-red-500 p-4 rounded-xl text-left font-bold text-red-800 w-full';
+                } else {
+                    b.className = 'bg-gray-100 border-2 border-gray-200 p-4 rounded-xl text-left text-gray-400 w-full';
+                }
+            });
+            
+            // 更新分数和连胜
+            answeredCount++;
+            if(isCorrect) {
+                correctCount++;
+                streak++;
+                maxStreak = Math.max(maxStreak, streak);
+                const points = (item.difficulty * 10) - (usedHint ? 3 : 0);
+                score += points;
+            } else {
+                streak = 0;
+            }
+            
+            document.getElementById('score-display').textContent = score;
+            document.getElementById('streak-display').textContent = streak;
+            
+            // 显示详细解析
+            showExplanation(isCorrect, item);
+            
+            // 显示下一题按钮
+            document.getElementById('next-btn').classList.remove('hidden');
+        }
+
+        // 显示详细解析面板
+        function showExplanation(isCorrect, item) {
+            const box = document.getElementById('explanation-box');
+            box.classList.remove('hidden');
+            
+            // 设置标题和图标
+            const icon = isCorrect ? '✅' : '❌';
+            const title = isCorrect ? '回答正确！' : '回答错误';
+            const titleColor = isCorrect ? 'text-green-800' : 'text-red-800';
+            
+            document.getElementById('exp-icon').textContent = icon;
+            document.getElementById('exp-title').textContent = title;
+            document.getElementById('exp-title').className = `font-bold text-lg ${titleColor}`;
+            
+            // 填充详细信息
+            document.getElementById('exp-term').textContent = item.term;
+            document.getElementById('exp-en').textContent = item.en;
+            
+            const acronymDiv = document.getElementById('exp-acronym');
+            if(item.acronym) {
+                acronymDiv.textContent = `缩写：${item.acronym}`;
+                acronymDiv.classList.remove('hidden');
+            } else {
+                acronymDiv.classList.add('hidden');
+            }
+            
+            document.getElementById('exp-def').textContent = item.definition;
+            
+            // 相关概念标签
+            const relatedBox = document.getElementById('exp-related-box');
+            const relatedContainer = document.getElementById('exp-related');
+            if(item.related && item.related.length > 0) {
+                relatedBox.classList.remove('hidden');
+                relatedContainer.innerHTML = item.related.map(r => 
+                    `<span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">${r}</span>`
+                ).join('');
+            } else {
+                relatedBox.classList.add('hidden');
+            }
+        }
+
+        // 显示提示
+        function showHint() {
+            if(usedHint) return;
+            usedHint = true;
+            
+            const hintSection = document.getElementById('hint-section');
+            document.getElementById('hint-text').textContent = currentQuestionData.hint || '暂无提示';
+            hintSection.classList.remove('hidden');
+            
+            document.getElementById('hint-btn').disabled = true;
+            document.getElementById('hint-btn').classList.add('opacity-50');
+        }
+
+        // 跳过题目
+        function skipQuestion() {
+            streak = 0;
+            answeredCount++;
+            document.getElementById('streak-display').textContent = streak;
+            
+            // 显示正确答案的解析
+            showExplanation(false, currentQuestionData.data);
+            document.getElementById('next-btn').classList.remove('hidden');
+            
+            // 禁用所有选项
+            document.querySelectorAll('.option-btn').forEach(b => {
+                b.disabled = true;
+                if(b.textContent === currentQuestionData.correctAnswer) {
+                    b.className = 'bg-green-100 border-2 border-green-500 p-4 rounded-xl text-left font-bold text-green-800 w-full';
+                }
+            });
+        }
+
+        // 下一题
+        function nextQuestion() {
+            currentIdx++;
+            showQuestion();
+        }
+
+        // 结束游戏
+        function endGame() {
+            document.getElementById('progress-bar').style.width = '100%';
+            document.getElementById('result-box').classList.remove('hidden');
+            
+            const accuracy = answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : 0;
+            
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('final-streak').textContent = maxStreak;
+            document.getElementById('final-acc').textContent = accuracy + '%';
+            document.getElementById('final-correct').textContent = correctCount;
+            
+            // 评价语
+            const msg = accuracy >= 80 ? '太棒了！你是多模态专家！🏆' : 
+                       accuracy >= 60 ? '表现不错！继续加油！👍' : 
+                       accuracy >= 40 ? '还有进步空间，多复习一下！💪' : 
+                       '继续努力，建议查看解析学习！📚';
+            
+            document.getElementById('result-msg').textContent = msg;
+        }
+
+        // 初始化
+        init();
+    </script>
 </body>
 </html>
