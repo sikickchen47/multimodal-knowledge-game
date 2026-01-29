@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Model Observatory | 世界模型观测站</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <style>
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-purple: #bc13fe;
+            --neon-green: #0aff0a;
+            --deep-space: #050508;
+            --glass: rgba(255, 255, 255, 0.03);
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--deep-space);
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
+        
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* 星空背景动画 */
+        .stars {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            background-image: 
+                radial-gradient(2px 2px at 20px 30px, #eee, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 50px 160px, #ddd, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 90px 40px, #fff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 130px 80px, rgba(255,255,255,0.6), rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 160px 120px, #ddd, rgba(0,0,0,0));
+            background-repeat: repeat;
+            background-size: 200px 200px;
+            opacity: 0.3;
+            animation: twinkle 10s infinite linear;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* 玻璃拟态卡片 */
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        
+        /* 霓虹光晕 */
+        .neon-border {
+            position: relative;
+        }
+        .neon-border::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple), var(--neon-green));
+            border-radius: inherit;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s;
+            filter: blur(8px);
+        }
+        .neon-border:hover::before {
+            opacity: 0.7;
+        }
+        
+        /* 3D翻转卡片 */
+        .flip-card {
+            perspective: 1000px;
+            height: 400px;
+        }
+        .flip-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s;
+            transform-style: preserve-3d;
+        }
+        .flip-card.flipped .flip-inner {
+            transform: rotateY(180deg);
+        }
+        .flip-front, .flip-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 16px;
+        }
+        .flip-back {
+            transform: rotateY(180deg);
+        }
+        
+        /* 注意力热力图网格 */
+        .attention-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            max-width: 300px;
+        }
+        .attention-cell {
+            aspect-ratio: 1;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .attention-cell.active {
+            background: var(--neon-blue);
+            box-shadow: 0 0 10px var(--neon-blue);
+        }
+        .attention-cell.causal {
+            background: rgba(255,255,255,0.05);
+        }
+        .attention-cell.causal.active {
+            background: var(--neon-green);
+            box-shadow: 0 0 10px var(--neon-green);
+        }
+        
+        /* 雷达图容器 */
+        .radar-container {
+            filter: drop-shadow(0 0 20px rgba(0,243,255,0.2));
+        }
+        
+        /* 粒子轨迹 */
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--neon-blue);
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: 0 0 10px var(--neon-blue);
+        }
+        
+        /* 滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--deep-space);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(var(--neon-blue), var(--neon-purple));
+            border-radius: 4px;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #fff 0%, var(--neon-blue) 50%, var(--neon-purple) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+<div class="stars"></div>
+
+<!-- 导航栏 -->
+<nav class="fixed top-0 w-full z-50 glass-panel border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-purple-600 animate-pulse"></div>
+            <span class="text-xl font-bold tracking-wider">WORLD MODEL <span class="text-cyan-400 mono">OBSERVATORY</span></span>
+        </div>
+        <div class="hidden md:flex gap-6 text-sm mono text-gray-400">
+            <a href="#paradigms" class="hover:text-cyan-400 transition-colors">PARADIGMS</a>
+            <a href="#causality" class="hover:text-cyan-400 transition-colors">CAUSALITY</a>
+            <a href="#dimensions" class="hover:text-cyan-400 transition-colors">DIMENSIONS</a>
+            <a href="#landscape" class="hover:text-cyan-400 transition-colors">LANDSCAPE</a>
+        </div>
+    </div>
+</nav>
+
+<!-- 英雄区 -->
+<section class="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
+    <div class="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
+        <div class="w-[800px] h-[800px] border border-cyan-500/30 rounded-full animate-[spin_20s_linear_infinite]"></div>
+        <div class="absolute w-[600px] h-[600px] border border-purple-500/30 rounded-full animate-[spin_15s_linear_infinite_reverse]"></div>
+        <div class="absolute w-[400px] h-[400px] border border-green-500/30 rounded-full animate-[spin_10s_linear_infinite]"></div>
+    </div>
+    
+    <div class="relative z-10 text-center max-w-5xl px-6">
+        <div class="inline-block mb-4 px-4 py-1 rounded-full glass-panel text-cyan-400 text-sm mono border border-cyan-400/30">
+            INTERACTIVE SURVEY 2025
+        </div>
+        <h1 class="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+            <span class="gradient-text">Beyond Reality</span><br>
+            <span class="text-white/90">Understanding World Models</span>
+        </h1>
+        <p class="text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+            探索 AI 如何构建世界的内部表征。从 LeCun 的 JEPA 到 Sora 的模拟器，<br>
+            通过交互式可视化理解<span class="text-cyan-400">因果性</span>、<span class="text-purple-400">交互性</span>与<span class="text-green-400">物理准确性</span>的复杂权衡。
+        </p>
+        <button onclick="document.getElementById('paradigms').scrollIntoView({behavior: 'smooth'})" 
+                class="group relative px-8 py-4 bg-transparent border border-cyan-400/50 rounded-full overflow-hidden hover:border-cyan-400 transition-all">
+            <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+            <span class="relative text-cyan-400 mono font-bold group-hover:text-white transition-colors">INITIATE EXPLORATION →</span>
+        </button>
+    </div>
+</section>
+
+<!-- 第一部分：双范式对比（理解型 vs 模拟型） -->
+<section id="paradigms" class="py-20 px-6 max-w-7xl mx-auto">
+    <div class="mb-12 text-center">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">Two Paradigms of World Modeling</h2>
+        <p class="text-gray-400">点击卡片探索两种截然不同的世界观</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-8">
+        <!-- 理解型大脑 -->
+        <div class="flip-card cursor-pointer" onclick="this.classList.toggle('flipped')">
+            <div class="flip-inner">
+                <div class="flip-front glass-panel p-8 flex flex-col items-center justify-center neon-border">
+                    <div class="w-32 h-32 mb-6 relative">
+                        <div class="absolute inset-0 bg-gradient-to-br from-orange-500 to-red-600 rounded-full opacity-20 animate-pulse"></div>
+                        <svg class="w-full h-full text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
+                                  d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-orange-400 mb-2">Understanding Brain</h3>
+                    <p class="text-center text-gray-400">抽象表征 · 语义预测 · 内部模型</p>
+                    <div class="mt-6 text-sm text-gray-500 mono">[ CLICK TO FLIP ]</div>
+                </div>
+                <div class="flip-back glass-panel p-8 bg-gradient-to-br from-orange-900/20 to-red-900/20">
+                    <h3 class="text-xl font-bold text-orange-400 mb-4">Internal World Model</h3>
+                    <ul class="space-y-3 text-sm text-gray-300">
+                        <li class="flex items-start gap-2">
+                            <span class="text-orange-400 mt-1">▸</span>
+                            <span>预测世界的<strong>抽象表征</strong>，而非像素细节</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-orange-400 mt-1">▸</span>
+                            <span>类似人类大脑的粗糙未来预测（Coarse Future）</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-orange-400 mt-1">▸</span>
+                            <span>支持规划、推理和决策</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-orange-400 mt-1">▸</span>
+                            <span>代表：LeCun's JEPA, V-JEPA 2</span>
+                        </li>
+                    </ul>
+                    <div class="mt-6 p-4 rounded bg-black/30 border border-orange-500/30">
+                        <div class="text-xs text-orange-300 mono mb-1">ARCHITECTURE</div>
+                        <div class="text-sm">Perception → World Model (Latent Space) → Actor/Critic</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模拟型宇宙 -->
+        <div class="flip-card cursor-pointer" onclick="this.classList.toggle('flipped')">
+            <div class="flip-inner">
+                <div class="flip-front glass-panel p-8 flex flex-col items-center justify-center neon-border">
+                    <div class="w-32 h-32 mb-6 relative">
+                        <div class="absolute inset-0 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full opacity-20 animate-pulse"></div>
+                        <svg class="w-full h-full text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
+                                  d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-cyan-400 mb-2">Simulation Matrix</h3>
+                    <p class="text-center text-gray-400">高保真模拟 · 像素级细节 · 外部世界</p>
+                    <div class="mt-6 text-sm text-gray-500 mono">[ CLICK TO FLIP ]</div>
+                </div>
+                <div class="flip-back glass-panel p-8 bg-gradient-to-br from-cyan-900/20 to-blue-900/20">
+                    <h3 class="text-xl font-bold text-cyan-400 mb-4">External World Simulator</h3>
+                    <ul class="space-y-3 text-sm text-gray-300">
+                        <li class="flex items-start gap-2">
+                            <span class="text-cyan-400 mt-1">▸</span>
+                            <span>模拟世界的<strong>每一个细节</strong>，类似《黑客帝国》</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-cyan-400 mt-1">▸</span>
+                            <span>高保真度，几乎与现实无法区分</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-cyan-400 mt-1">▸</span>
+                            <span>用于机器人训练、游戏引擎、沉浸式体验</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-cyan-400 mt-1">▸</span>
+                            <span>代表：Sora, Gaia-1, 物理引擎</span>
+                        </li>
+                    </ul>
+                    <div class="mt-6 p-4 rounded bg-black/30 border border-cyan-500/30">
+                        <div class="text-xs text-cyan-300 mono mb-1">APPROACH</div>
+                        <div class="text-sm">Video Generation → Neural Rendering → Real-time Simulation</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 协同工作示意 -->
+    <div class="mt-12 glass-panel rounded-2xl p-8 relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-purple-500 to-cyan-500"></div>
+        <h3 class="text-xl font-bold mb-6 text-center">Embodied AI 中的协同</h3>
+        <div class="flex flex-col md:flex-row items-center justify-between gap-8">
+            <div class="flex-1 text-center">
+                <div class="text-orange-400 font-bold mb-2">Internal Model</div>
+                <div class="text-sm text-gray-400">规划 & 决策</div>
+                <div class="mt-2 text-xs mono text-orange-300/70">V-JEPA 2</div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-px bg-gradient-to-r from-orange-500 to-cyan-500"></div>
+                <div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-400">
+                    <span class="text-purple-400 text-xs">↔</span>
+                </div>
+                <div class="w-16 h-px bg-gradient-to-r from-cyan-500 to-orange-500"></div>
+            </div>
+            <div class="flex-1 text-center">
+                <div class="text-cyan-400 font-bold mb-2">External Simulator</div>
+                <div class="text-sm text-gray-400">训练 & 验证</div>
+                <div class="mt-2 text-xs mono text-cyan-300/70">Gaia-1 / Game Engine</div>
+            </div>
+        </div>
+        <p class="mt-6 text-center text-sm text-gray-400 italic">
+            "机器人通过内部世界模型进行规划，同时与模拟外部世界的外部世界模型交互学习"
+        </p>
+    </div>
+</section>
+
+<!-- 第二部分：因果注意力可视化（核心交互） -->
+<section id="causality" class="py-20 bg-black/30 border-y border-white/5">
+    <div class="max-w-6xl mx-auto px-6">
+        <div class="mb-12">
+            <div class="inline-block px-3 py-1 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 text-xs mono mb-4">CRITICAL INSIGHT</div>
+            <h2 class="text-3xl md:text-4xl font-bold mb-4">The Causality Gap</h2>
+            <p class="text-gray-400 max-w-2xl">
+                为什么当前的 Diffusion Transformers (DiT) 不是真正的世界模型？
+                <span class="text-white">因为它们使用了双向（全）注意力，违反了现实的时间不对称性。</span>
+            </p>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+            <!-- 左侧：交互式注意力可视化 -->
+            <div class="glass-panel rounded-2xl p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-bold mono">Attention Pattern Visualizer</h3>
+                    <div class="flex gap-2">
+                        <button onclick="setMode('full')" id="btn-full" class="px-4 py-2 rounded-lg bg-red-500/20 border border-red-500/50 text-red-400 text-sm transition-all hover:bg-red-500/30">
+                            Full Attention (DiT)
+                        </button>
+                        <button onclick="setMode('causal')" id="btn-causal" class="px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-gray-400 text-sm transition-all hover:bg-white/10">
+                            Causal Attention (AR-DiT)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex justify-center mb-6">
+                    <div id="attention-viz" class="attention-grid p-4 rounded-xl bg-black/50 border border-white/10">
+                        <!-- 16 cells generated by JS -->
+                    </div>
+                </div>
+
+                <div class="space-y-4 text-sm">
+                    <div id="desc-full" class="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-2 h-2 rounded-full bg-red-500"></div>
+                            <span class="font-bold text-red-400">Full Attention (Non-Causal)</span>
+                        </div>
+                        <p class="text-gray-300">
+                            当前帧可以看到<strong>未来帧</strong>的信息（黄色区域）。整个视频序列在生成第一帧后就被预决定了。
+                            无法实现实时交互，因为未来已经"泄露"给了过去。
+                        </p>
+                    </div>
+                    <div id="desc-causal" class="p-4 rounded-lg bg-green-500/10 border border-green-500/20 hidden">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                            <span class="font-bold text-green-400">Causal Attention (Autoregressive)</span>
+                        </div>
+                        <p class="text-gray-300">
+                            严格的三角掩码确保当前帧只能看到<strong>过去和当前</strong>的信息。
+                            允许帧-by-帧生成，支持实时用户交互（如游戏中），符合物理因果律。
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-6 border-t border-white/10">
+                    <div class="flex items-center justify-between text-xs mono text-gray-500">
+                        <span>Frame 1</span>
+                        <span>Frame 2</span>
+                        <span>Frame 3</span>
+                        <span>Frame 4</span>
+                    </div>
+                    <div class="mt-2 h-1 bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 rounded-full overflow-hidden">
+                        <div id="timeline-marker" class="h-full w-1/4 bg-gradient-to-r from-red-500 to-orange-500 transition-all duration-500"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：技术演进路径 -->
+            <div class="space-y-6">
+                <div class="glass-panel p-6 rounded-xl border-l-4 border-yellow-500">
+                    <h4 class="font-bold text-yellow-400 mb-2">Problem: Quality vs. Causality Trade-off</h4>
+                    <p class="text-sm text-gray-300 mb-3">
+                        传统的自回归模型（如 LLM）是因果的，但使用离散 token 导致视频质量损失严重（VQ 量化误差）。
+                        Diffusion 模型质量高，但缺乏因果性。
+                    </p>
+                    <div class="flex gap-4 text-xs mono">
+                        <div class="flex-1 p-2 rounded bg-black/30 text-center">
+                            <div class="text-red-400">AR (LLM-style)</div>
+                            <div class="text-gray-500">Causal ✓</div>
+                            <div class="text-gray-500">Quality ✗</div>
+                        </div>
+                        <div class="flex items-center text-gray-600">→</div>
+                        <div class="flex-1 p-2 rounded bg-black/30 text-center border border-cyan-500/30">
+                            <div class="text-cyan-400">AR-DiT</div>
+                            <div class="text-green-400">Causal ✓</div>
+                            <div class="text-green-400">Quality ✓</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-6 rounded-xl">
+                    <h4 class="font-bold text-cyan-400 mb-3">Key Solutions</h4>
+                    <ul class="space-y-3 text-sm">
+                        <li class="flex items-start gap-3">
+                            <span class="mono text-xs bg-cyan-500/10 text-cyan-400 px-2 py-1 rounded">Diffusion Forcing</span>
+                            <span class="text-gray-300">逐帧独立噪声级训练，赋予 Diffusion 模型自回归能力</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="mono text-xs bg-purple-500/10 text-purple-400 px-2 py-1 rounded">CausVid</span>
+                            <span class="text-gray-300">将预训练的双向 DiT 改造为因果注意力（AR-DiT）</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="mono text-xs bg-green-500/10 text-green-400 px-2 py-1 rounded">MAGI-1</span>
+                            <span class="text-gray-300">原生预训练 AR-DiT，针对因果架构优化基础设施</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="p-4 rounded-xl bg-gradient-to-r from-cyan-900/20 to-blue-900/20 border border-cyan-500/20">
+                    <p class="text-sm text-cyan-200 italic">
+                        "Bringing causal dependencies to video generation is the first step towards true world models."
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 第三部分：五维雷达图 -->
+<section id="dimensions" class="py-20 px-6 max-w-7xl mx-auto">
+    <div class="text-center mb-12">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">Five Dimensions of True World Models</h2>
+        <p class="text-gray-400">真正的视频世界模型必须具备的五个关键属性</p>
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-8">
+        <!-- 左侧：控制面板 -->
+        <div class="glass-panel rounded-2xl p-6 h-fit">
+            <h3 class="text-lg font-bold mb-6 mono">Model Comparison</h3>
+            <div class="space-y-4">
+                <label class="flex items-center gap-3 p-3 rounded-lg bg-white/5 cursor-pointer hover:bg-white/10 transition-colors">
+                    <input type="checkbox" checked onchange="toggleModel('gpt4')" class="w-4 h-4 rounded border-gray-600 text-cyan-500 focus:ring-cyan-500 bg-transparent">
+                    <div>
+                        <div class="font-bold text-cyan-400">GPT-4V / LWM</div>
+                        <div class="text-xs text-gray-500">Multimodal LLM</div>
+                    </div>
+                </label>
+                <label class="flex items-center gap-3 p-3 rounded-lg bg-white/5 cursor-pointer hover:bg-white/10 transition-colors">
+                    <input type="checkbox" checked onchange="toggleModel('sora')" class="w-4 h-4 rounded border-gray-600 text-purple-500 focus:ring-purple-500 bg-transparent">
+                    <div>
+                        <div class="font-bold text-purple-400">Sora / Veo3</div>
+                        <div class="text-xs text-gray-500">Video Diffusion</div>
+                    </div>
+                </label>
+                <label class="flex items-center gap-3 p-3 rounded-lg bg-white/5 cursor-pointer hover:bg-white/10 transition-colors">
+                    <input type="checkbox" checked onchange="toggleModel('vjepa')" class="w-4 h-4 rounded border-gray-600 text-orange-500 focus:ring-orange-500 bg-transparent">
+                    <div>
+                        <div class="font-bold text-orange-400">V-JEPA 2</div>
+                        <div class="text-xs text-gray-500">Video Joint Embedding</div>
+                    </div>
+                </label>
+                <label class="flex items-center gap-3 p-3 rounded-lg bg-white/5 cursor-pointer hover:bg-white/10 transition-colors">
+                    <input type="checkbox" checked onchange="toggleModel('ideal')" class="w-4 h-4 rounded border-gray-600 text-green-500 focus:ring-green-500 bg-transparent">
+                    <div>
+                        <div class="font-bold text-green-400">Ideal World Model</div>
+                        <div class="text-xs text-gray-500">Future Target</div>
+                    </div>
+                </label>
+            </div>
+
+            <div class="mt-8 p-4 rounded-lg bg-black/30 border border-white/10">
+                <div class="text-xs mono text-gray-500 mb-2">DIMENSIONS</div>
+                <div class="space-y-2 text-xs">
+                    <div class="flex justify-between"><span class="text-red-400">Causal</span> <span class="text-gray-600">因果一致性</span></div>
+                    <div class="flex justify-between"><span class="text-blue-400">Interactive</span> <span class="text-gray-600">实时交互</span></div>
+                    <div class="flex justify-between"><span class="text-purple-400">Persistent</span> <span class="text-gray-600">持久记忆</span></div>
+                    <div class="flex justify-between"><span class="text-yellow-400">Real-time</span> <span class="text-gray-600">实时生成</span></div>
+                    <div class="flex justify-between"><span class="text-green-400">Physical</span> <span class="text-gray-600">物理准确</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 中间：雷达图 -->
+        <div class="lg:col-span-2 glass-panel rounded-2xl p-8 flex items-center justify-center relative min-h-[500px]">
+            <canvas id="radarCanvas" width="600" height="500" class="radar-container"></canvas>
+            
+            <!-- 浮动标签 -->
+            <div class="absolute top-8 left-8 max-w-xs">
+                <div id="radar-desc" class="text-sm text-gray-300 transition-all duration-300">
+                     toggle 上方复选框对比不同模型在五维空间中的能力边界。
+                    注意 Sora 在物理准确性和因果性上的权衡。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 维度详解卡片 -->
+    <div class="grid md:grid-cols-5 gap-4 mt-12">
+        <div class="glass-panel p-4 rounded-xl border-t-2 border-red-500 hover:scale-105 transition-transform cursor-pointer group" onmouseenter="highlightAxis(0)">
+            <div class="text-2xl mb-2 group-hover:scale-110 transition-transform">⏳</div>
+            <div class="font-bold text-sm text-red-400 mb-1">Causal</div>
+            <div class="text-xs text-gray-500">因果性</div>
+            <div class="mt-2 text-xs text-gray-400">禁止未来信息泄露到过去</div>
+        </div>
+        <div class="glass-panel p-4 rounded-xl border-t-2 border-blue-500 hover:scale-105 transition-transform cursor-pointer group" onmouseenter="highlightAxis(1)">
+            <div class="text-2xl mb-2 group-hover:scale-110 transition-transform">🎮</div>
+            <div class="font-bold text-sm text-blue-400 mb-1">Interactive</div>
+            <div class="text-xs text-gray-500">交互性</div>
+            <div class="mt-2 text-xs text-gray-400">支持实时动作输入改变未来</div>
+        </div>
+        <div class="glass-panel p-4 rounded-xl border-t-2 border-purple-500 hover:scale-105 transition-transform cursor-pointer group" onmouseenter="highlightAxis(2)">
+            <div class="text-2xl mb-2 group-hover:scale-110 transition-transform">💾</div>
+            <div class="font-bold text-sm text-purple-400 mb-1">Persistent</div>
+            <div class="text-xs text-gray-500">持久性</div>
+            <div class="mt-2 text-xs text-gray-400">长期一致性，物体持久存在</div>
+        </div>
+        <div class="glass-panel p-4 rounded-xl border-t-2 border-yellow-500 hover:scale-105 transition-transform cursor-pointer group" onmouseenter="highlightAxis(3)">
+            <div class="text-2xl mb-2 group-hover:scale-110 transition-transform">⚡</div>
+            <div class="font-bold text-sm text-yellow-400 mb-1">Real-time</div>
+            <div class="text-xs text-gray-500">实时性</div>
+            <div class="mt-2 text-xs text-gray-400">25FPS+ 实时渲染能力</div>
+        </div>
+        <div class="glass-panel p-4 rounded-xl border-t-2 border-green-500 hover:scale-105 transition-transform cursor-pointer group" onmouseenter="highlightAxis(4)">
+            <div class="text-2xl mb-2 group-hover:scale-110 transition-transform">🌍</div>
+            <div class="font-bold text-sm text-green-400 mb-1">Physical</div>
+            <div class="text-xs text-gray-500">物理准确性</div>
+            <div class="mt-2 text-xs text-gray-400">符合物理规律（重力、碰撞）</div>
+        </div>
+    </div>
+</section>
+
+<!-- 第四部分：全景图 -->
+<section id="landscape" class="py-20 bg-black/30 border-t border-white/5">
+    <div class="max-w-7xl mx-auto px-6">
+        <h2 class="text-3xl md:text-4xl font-bold mb-8 text-center">Research Landscape</h2>
+        
+        <div class="glass-panel rounded-2xl p-8 overflow-x-auto">
+            <div class="min-w-[800px]">
+                <div class="flex justify-between items-end mb-8 relative">
+                    <!-- 时间线 -->
+                    <div class="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent"></div>
+                    
+                    <div class="relative z-10 text-center w-1/4">
+                        <div class="w-4 h-4 rounded-full bg-cyan-500 mx-auto mb-2 shadow-[0_0_10px_rgba(0,243,255,0.8)]"></div>
+                        <div class="text-xs mono text-cyan-400">2018</div>
+                        <div class="text-sm font-bold mt-1">World Models</div>
+                        <div class="text-xs text-gray-500">Ha & Schmidhuber</div>
+                    </div>
+                    <div class="relative z-10 text-center w-1/4">
+                        <div class="w-4 h-4 rounded-full bg-purple-500 mx-auto mb-2 shadow-[0_0_10px_rgba(188,19,254,0.8)]"></div>
+                        <div class="text-xs mono text-purple-400">2022</div>
+                        <div class="text-sm font-bold mt-1">I-JEPA</div>
+                        <div class="text-xs text-gray-500">LeCun</div>
+                    </div>
+                    <div class="relative z-10 text-center w-1/4">
+                        <div class="w-4 h-4 rounded-full bg-orange-500 mx-auto mb-2 shadow-[0_0_10px_rgba(255,165,0,0.8)]"></div>
+                        <div class="text-xs mono text-orange-400">2024</div>
+                        <div class="text-sm font-bold mt-1">Sora / V-JEPA</div>
+                        <div class="text-xs text-gray-500">OpenAI / Meta</div>
+                    </div>
+                    <div class="relative z-10 text-center w-1/4">
+                        <div class="w-4 h-4 rounded-full bg-green-500 mx-auto mb-2 shadow-[0_0_10px_rgba(10,255,10,0.8)] animate-pulse"></div>
+                        <div class="text-xs mono text-green-400">2025+</div>
+                        <div class="text-sm font-bold mt-1">AR-DiT / MAGI-1</div>
+                        <div class="text-xs text-gray-500">Causal World Models</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 引用原文结论 -->
+        <div class="mt-12 max-w-3xl mx-auto text-center">
+            <blockquote class="text-2xl md:text-3xl font-light italic text-gray-300 leading-relaxed">
+                "A true video world model must be <span class="text-red-400">causal</span>, <span class="text-blue-400">interactive</span>, <span class="text-purple-400">persistent</span>, <span class="text-yellow-400">real-time</span>, and <span class="text-green-400">physically accurate</span>."
+            </blockquote>
+            <div class="mt-4 text-sm text-gray-500 mono">— Towards Video World Models, 2025</div>
+        </div>
+    </div>
+</section>
+
+<!-- 页脚 -->
+<footer class="py-12 text-center text-gray-600 text-sm border-t border-white/5">
+    <p class="mono">Interactive Survey based on "Towards Video World Models"</p>
+    <p class="mt-2 text-xs">Built for World Model Exploration</p>
+</footer>
+
+<script>
+// 初始化 GSAP
+gsap.registerPlugin(ScrollTrigger);
+
+// 注意力可视化逻辑
+let currentMode = 'full';
+const grid = document.getElementById('attention-viz');
+const cells = [];
+
+// 创建 4x4 网格（模拟 4个时间步的注意力）
+for (let i = 0; i < 16; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'attention-cell';
+    cell.dataset.pos = i;
+    grid.appendChild(cell);
+    cells.push(cell);
+}
+
+function setMode(mode) {
+    currentMode = mode;
+    const fullBtn = document.getElementById('btn-full');
+    const causalBtn = document.getElementById('btn-causal');
+    const fullDesc = document.getElementById('desc-full');
+    const causalDesc = document.getElementById('desc-causal');
+    const marker = document.getElementById('timeline-marker');
+    
+    if (mode === 'full') {
+        fullBtn.className = "px-4 py-2 rounded-lg bg-red-500/20 border border-red-500/50 text-red-400 text-sm transition-all";
+        causalBtn.className = "px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-gray-400 text-sm transition-all";
+        fullDesc.classList.remove('hidden');
+        causalDesc.classList.add('hidden');
+        marker.className = "h-full w-full bg-gradient-to-r from-red-500 to-orange-500 transition-all duration-500";
+        
+        // Full attention: 全激活（上三角）
+        cells.forEach((cell, idx) => {
+            const row = Math.floor(idx / 4);
+            const col = idx % 4;
+            setTimeout(() => {
+                if (row <= col) {
+                    cell.classList.add('active');
+                    cell.classList.remove('causal');
+                } else {
+                    cell.classList.remove('active');
+                }
+            }, idx * 20);
+        });
+    } else {
+        causalBtn.className = "px-4 py-2 rounded-lg bg-green-500/20 border border-green-500/50 text-green-400 text-sm transition-all";
+        fullBtn.className = "px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-gray-400 text-sm transition-all";
+        causalDesc.classList.remove('hidden');
+        fullDesc.classList.add('hidden');
+        marker.className = "h-full w-1/4 bg-gradient-to-r from-green-500 to-cyan-500 transition-all duration-500";
+        
+        // Causal attention: 严格下三角
+        cells.forEach((cell, idx) => {
+            const row = Math.floor(idx / 4);
+            const col = idx % 4;
+            setTimeout(() => {
+                cell.classList.remove('active');
+                if (col <= row) {
+                    cell.classList.add('causal');
+                    cell.classList.add('active');
+                } else {
+                    cell.classList.remove('causal');
+                    cell.classList.remove('active');
+                }
+            }, idx * 20);
+        });
+    }
+}
+
+// 初始化 Full 模式
+setMode('full');
+
+// 雷达图逻辑
+const canvas = document.getElementById('radarCanvas');
+const ctx = canvas.getContext('2d');
+const centerX = canvas.width / 2;
+const centerY = canvas.height / 2;
+const radius = 180;
+
+const dimensions = ['Causal', 'Interactive', 'Persistent', 'Real-time', 'Physical'];
+const angleStep = (Math.PI * 2) / 5;
+
+const models = {
+    gpt4: {
+        name: 'GPT-4V/LWM',
+        color: 'rgba(0, 243, 255, 0.5)',
+        border: '#00f3ff',
+        data: [0.3, 0.4, 0.6, 0.9, 0.2]  // 高实时，低物理
+    },
+    sora: {
+        name: 'Sora/Veo3',
+        color: 'rgba(188, 19, 254, 0.5)',
+        border: '#bc13fe',
+        data: [0.1, 0.1, 0.3, 0.2, 0.7]  // 高物理，低交互/因果
+    },
+    vjepa: {
+        name: 'V-JEPA 2',
+        color: 'rgba(255, 165, 0, 0.5)',
+        border: '#ffa500',
+        data: [0.8, 0.3, 0.7, 0.6, 0.5]  // 平衡的"理解型"
+    },
+    ideal: {
+        name: 'Ideal World Model',
+        color: 'rgba(10, 255, 10, 0.2)',
+        border: '#0aff0a',
+        data: [1.0, 1.0, 1.0, 1.0, 1.0]  // 全满
+    }
+};
+
+let activeModels = { gpt4: true, sora: true, vjepa: true, ideal: true };
+
+function drawRadar() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // 绘制背景网格
+    for (let i = 1; i <= 5; i++) {
+        ctx.beginPath();
+        ctx.strokeStyle = i === 5 ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.05)';
+        ctx.lineWidth = i === 5 ? 2 : 1;
+        for (let j = 0; j <= 5; j++) {
+            const angle = j * angleStep - Math.PI / 2;
+            const x = centerX + Math.cos(angle) * (radius * i / 5);
+            const y = centerY + Math.sin(angle) * (radius * i / 5);
+            if (j === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+    }
+    
+    // 绘制轴线和标签
+    dimensions.forEach((dim, i) => {
+        const angle = i * angleStep - Math.PI / 2;
+        const x = centerX + Math.cos(angle) * radius;
+        const y = centerY + Math.sin(angle) * radius;
+        
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        
+        // 标签
+        const labelX = centerX + Math.cos(angle) * (radius + 30);
+        const labelY = centerY + Math.sin(angle) * (radius + 30);
+        ctx.fillStyle = getDimColor(i);
+        ctx.font = 'bold 12px Inter';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(dim, labelX, labelY);
+    });
+    
+    // 绘制模型数据
+    Object.entries(models).forEach(([key, model]) => {
+        if (!activeModels[key]) return;
+        
+        ctx.beginPath();
+        model.data.forEach((value, i) => {
+            const angle = i * angleStep - Math.PI / 2;
+            const x = centerX + Math.cos(angle) * (radius * value);
+            const y = centerY + Math.sin(angle) * (radius * value);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        });
+        ctx.closePath();
+        ctx.fillStyle = model.color;
+        ctx.fill();
+        ctx.strokeStyle = model.border;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // 绘制数据点
+        model.data.forEach((value, i) => {
+            const angle = i * angleStep - Math.PI / 2;
+            const x = centerX + Math.cos(angle) * (radius * value);
+            const y = centerY + Math.sin(angle) * (radius * value);
+            ctx.beginPath();
+            ctx.arc(x, y, 4, 0, Math.PI * 2);
+            ctx.fillStyle = model.border;
+            ctx.fill();
+        });
+    });
+}
+
+function getDimColor(idx) {
+    const colors = ['#ff4444', '#4444ff', '#aa44ff', '#ffaa00', '#44ff44'];
+    return colors[idx];
+}
+
+function toggleModel(model) {
+    activeModels[model] = !activeModels[model];
+    drawRadar();
+}
+
+function highlightAxis(idx) {
+    // 可以添加高亮特定维度的逻辑
+    const dimNames = ['因果性: 时间顺序的严格遵守', '交互性: 动作影响世界状态', 
+                      '持久性: 物体存在的一致性记忆', '实时性: 流式生成速度', 
+                      '物理性: 符合牛顿力学等规律'];
+    document.getElementById('radar-desc').textContent = dimNames[idx];
+    document.getElementById('radar-desc').style.color = getDimColor(idx);
+}
+
+// 初始化雷达图
+drawRadar();
+
+// GSAP 动画
+gsap.from(".flip-card", {
+    scrollTrigger: {
+        trigger: "#paradigms",
+        start: "top 80%",
+    },
+    y: 100,
+    opacity: 0,
+    duration: 1,
+    stagger: 0.2,
+    ease: "power3.out"
+});
+
+gsap.from("#causality .glass-panel", {
+    scrollTrigger: {
+        trigger: "#causality",
+        start: "top 80%",
+    },
+    x: -50,
+    opacity: 0,
+    duration: 1,
+    ease: "power3.out"
+});
+
+// 鼠标跟随粒子效果
+document.addEventListener('mousemove', (e) => {
+    if (Math.random() > 0.9) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = e.clientX + 'px';
+        particle.style.top = e.clientY + 'px';
+        document.body.appendChild(particle);
+        
+        gsap.to(particle, {
+            y: e.clientY + 100,
+            opacity: 0,
+            duration: 1.5,
+            onComplete: () => particle.remove()
+        });
+    }
+});
+</script>
+
+</body>
+</html>
